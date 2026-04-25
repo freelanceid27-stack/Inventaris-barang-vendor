@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uji Koneksi Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 text-center">
+
+<div class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg">
+    <h2 class="text-xl font-bold mb-6 text-blue-600">UJI KONEKSI KE FIREBASE</h2>
+    <p class="mb-8 text-gray-700">Tekan tombol di bawah untuk kirim data uji</p>
+    
+    <!-- Tombol DIPERBAIKI: Ditambah z-index & pointer-events -->
+    <button 
+        id="tombolUji" 
+        class="relative z-10 w-full bg-blue-500 text-white px-6 py-4 rounded-lg font-bold text-lg hover:bg-blue-600 active:bg-blue-700 transition-colors cursor-pointer"
+        style="pointer-events: auto !important;"
+    >
+        KIRIM DATA UJI
+    </button>
+
+    <div id="status" class="mt-8 font-semibold text-base"></div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js"></script>
+
+<script>
+  // KONFIGURASI DENGAN URL YANG TEPAT (DARI LAYAR KAMU)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCUA0AH0bXHcm3w85wrRi1uBGJBkB4ClJg",
+    authDomain: "sistemkeamanan-9a570.firebaseapp.com",
+    databaseURL: "https://sistemkeamanan-9a570-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sistemkeamanan-9a570",
+    storageBucket: "sistemkeamanan-9a570.firebasestorage.app",
+    messagingSenderId: "317927546609",
+    appId: "1:317927546609:web:536535cb642902dd8f9350",
+    measurementId: "G-MKYG3HKFKN"
+  };
+
+  // Inisialisasi
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Fungsi Kirim Data Uji
+  document.getElementById('tombolUji').addEventListener('click', function() {
+      const status = document.getElementById('status');
+      status.textContent = "Sedang mengirim...";
+      status.className = "mt-8 font-semibold text-blue-600";
+
+      // Data Uji
+      const dataUji = {
+          pesan: "Ini data uji dari sistem",
+          waktu: new Date().toLocaleString('id-ID'),
+          pengirim: "Form Check In"
+      };
+
+      // Kirim ke Database
+      db.ref('uji_koneksi').push(dataUji)
+      .then(function() {
+          status.textContent = "✅ BERHASIL! Data sudah masuk. Cek tab Data di Firebase sekarang!";
+          status.className = "mt-8 font-semibold text-green-600";
+      })
+      .catch(function(error) {
+          status.textContent = "❌ Gagal: " + error.message;
+          status.className = "mt-8 font-semibold text-red-600";
+          console.error(error);
+      });
+  });
+
+</script>
+</body>
+</html>
