@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Cekout Vendor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#165DFF', 
+                        secondary: '#36CFC9', 
+                        accent: '#F53F3F', 
+                        neutral: '#86909C', 
+                        light: '#F2F3F5', 
+                        dark: '#1D2129', 
+                        success: '#00B42A', 
+                        warning: '#FF7D00' 
+                    },
+                    fontFamily: { inter: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+            .card-shadow { box-shadow: 0 4px 20px rgba(22, 93, 255, 0.08); }
+            .hover-scale { transition: all 0.2s ease; }
+            .hover-scale:hover { transform: scale(1.02); }
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .text-responsive { font-size: clamp(0.875rem, 2vw, 1rem); }
+            .heading-responsive { font-size: clamp(1.25rem, 3vw, 1.75rem); }
+            @media (max-width: 640px) { 
+                .btn-touch { padding: 0.75rem 1rem !important; font-size: 1rem !important; } 
+                .modal-padding { padding: 1rem !important; } 
+            }
+            .status-label { @apply px-3 py-1 rounded-full text-xs font-medium; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 font-inter text-dark min-h-screen">
+
+    <div id="notificationContainer" class="fixed top-4 right-4 z-[9999]"></div>
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6">
+        <!-- Header Halaman -->
+        <div class="bg-white rounded-2xl card-shadow p-6 mb-6 border border-blue-100 text-center">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <i class="fa-solid fa-file-export text-primary text-3xl"></i>
+                <h1 class="heading-responsive font-extrabold text-primary text-shadow">FORM CEKOUT VENDOR</h1>
+            </div>
+            <p class="text-neutral text-responsive">Pilih data yang akan dilakukan proses pengembalian barang (bisa sebagian)</p>
+        </div>
+
+        <!-- Tabel Daftar Menunggu Cekout -->
+        <div class="bg-white rounded-2xl card-shadow p-6 border border-blue-100">
+            <div class="flex items-center justify-between gap-3 mb-6 pb-3 border-b border-blue-100">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-list-check text-primary text-xl"></i>
+                    <h2 class="text-xl font-bold text-dark">Daftar Menunggu Cekout</h2>
+                </div>
+                <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium" id="jumlahData">0 Data</span>
+            </div>
+
+            <!-- Fitur Pencarian -->
+            <div class="mb-6">
+                <div class="relative">
+                    <input type="text" id="inputPencarian" placeholder="Cari berdasarkan nama vendor/perusahaan..." class="w-full border border-blue-200 p-3 pl-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral">
+                        <i class="fa-solid fa-search"></i>
+                    </div>
+                    <button id="tombolResetPencarian" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral hover:text-accent hidden">
+                        <i class="fa-solid fa-times-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper rounded-xl border border-blue-100 overflow-hidden">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gradient-to-r from-blue-50 to-indigo-50 text-left">
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">No</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">Nama Vendor & Pekerjaan</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">POS MASUK</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">Tanggal & Jam Masuk</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">Sisa Barang</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive">Status</th>
+                            <th class="border-b border-blue-100 p-4 font-bold text-primary text-responsive text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelCekout">
+                        <!-- Status Loading -->
+                        <tr>
+                            <td colspan="7" class="border-b border-blue-100 p-8 text-center text-responsive text-neutral">
+                                <i class="fa-solid fa-spinner fa-spin text-2xl mb-3 text-primary/70"></i>
+                                <p class="font-medium" id="teksStatus">Sedang memuat data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Tombol Aksi -->
+            <div class="mt-4 text-center">
+                <button onclick="muatDataCekout()" class="bg-primary/10 text-primary px-4 py-2 rounded-lg hover:bg-primary/20 transition-all flex items-center gap-2 mx-auto">
+                    <i class="fa-solid fa-refresh"></i> Muat Ulang Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM CEKOUT -->
+    <div id="modalFormCekout" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6 border border-blue-100 transform transition-all modal-padding">
+      <!-- === KOP SURAT IKUT GESER === -->
+<div style="
+    text-align: center; 
+    padding: 10px 0; 
+    margin-bottom: 15px;
+    border-bottom: 1px solid #000;
+">
+    <p style="margin:0; font-size:16px; font-weight:bold; font-family: Arial, sans-serif;">FORM CHECK BARANG BAWAAN VENDOR</p>
+    <p style="margin:2px 0; font-size:14px; font-family: Arial, sans-serif;">PT. UNITED TRACTORS PANDU ENGINEERING</p>
+    <p style="margin:0; font-size:12px; font-family: Arial, sans-serif;">Jl. Jababeka XI Blok 30 – 40 Kawasan Industri Jababeka, Cikarang 17530</p>
+</div>
+<!-- === AKHIR KOP SURAT === -->
+  
+            <div class="flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b border-blue-100">
+                <h3 class="text-lg sm:text-xl font-bold text-primary flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Form Pengembalian Barang
+                </h3>
+                <button onclick="tutupModalCekout()" class="text-neutral hover:text-accent text-xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-red-50 transition-all">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Info Vendor -->
+            <div class="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-neutral mb-1">Nama Vendor</p>
+                        <p class="font-semibold text-dark uppercase" id="detailNamaVendor">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral mb-1">Pekerjaan</p>
+                        <p class="font-semibold text-dark uppercase" id="detailPekerjaan">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral mb-1">Tanggal Masuk</p>
+                        <p class="font-semibold text-dark" id="detailTanggal">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral mb-1">Jam Masuk</p>
+                        <p class="font-semibold text-dark" id="detailJamMasuk">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral mb-1">POS MASUK</p>
+                        <p class="font-semibold text-dark uppercase" id="detailPosMasuk">-</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <p class="text-sm text-neutral mb-1">Status Saat Ini</p>
+                        <span class="status-label bg-blue-100 text-blue-800 uppercase" id="detailStatus">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Pengembalian -->
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-primary/80 mb-3 flex items-center gap-1">
+                        <i class="fa-solid fa-boxes-stacked"></i> DAFTAR BARANG & JUMLAH DIKEMBALIKAN
+                        <span class="text-xs text-neutral ml-2">(Bisa isi sebagian)</span>
+                    </label>
+                    <div id="formBarangContainer" class="space-y-3">
+                        <!-- Input barang akan muncul di sini -->
+                    </div>
+                </div>
+
+                <!-- Foto Dokumentasi Barang -->
+                <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <h4 class="font-semibold text-primary mb-3 flex items-center gap-2 uppercase">
+                        <i class="fa-solid fa-image"></i> Foto Dokumentasi Barang
+                    </h4>
+                    <div id="tampilanGambarBarang" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <p class="text-neutral italic text-center col-span-full">Memuat gambar...</p>
+                    </div>
+                    <p class="text-xs text-neutral mt-2 text-center">*Klik gambar untuk memperbesar</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-primary/80 mb-2 flex items-center gap-1">
+                            <i class="fa-solid fa-clock"></i> Jam Keluar (Otomatis)
+                        </label>
+                        <input type="text" id="jamKeluar" class="w-full border border-blue-200 p-3 rounded-xl bg-blue-50 text-dark font-medium focus:outline-none focus:ring-2 focus:ring-primary" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-primary/80 mb-2 flex items-center gap-1">
+                            <i class="fa-solid fa-user-shield"></i> Nama Petugas Keamanan
+                        </label>
+                        <input type="text" id="namaPetugas" class="w-full border border-blue-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Masukkan nama petugas">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-primary/80 mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-pen-nib"></i> Tanda Tangan Petugas
+                    </label>
+                    <div class="border border-blue-200 rounded-xl p-4 bg-blue-50 text-center">
+                        <canvas id="ttdPetugas" class="border border-dashed border-blue-300 rounded-lg bg-white w-full max-w-sm mx-auto" height="120"></canvas>
+                        <button type="button" onclick="bersihkanTtd()" class="mt-2 text-sm text-accent hover:text-accent/80 flex items-center gap-1 mx-auto">
+                            <i class="fa-solid fa-eraser"></i> Bersihkan Tanda Tangan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
+                    <i class="fa-solid fa-info-circle mr-2"></i>
+                    <b>Catatan:</b> Jika jumlah yang dikembalikan kurang dari jumlah awal, data akan tetap tersedia di daftar ini untuk proses pengembalian berikutnya.
+                </div>
+
+                <div class="pt-4 flex gap-3 justify-end flex-wrap border-t border-blue-100">
+                    <button type="button" onclick="tutupModalCekout()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 btn-touch">
+                        <i class="fa-solid fa-times"></i> Batal
+                    </button>
+                    <button type="button" onclick="simpanCekout()" class="bg-gradient-to-r from-primary/90 to-primary hover:from-primary hover:to-primary/90 text-white px-5 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 hover-scale btn-touch">
+                        <i class="fa-solid fa-save"></i> Simpan Data Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GAMBAR BESAR -->
+    <div id="modalGambarBesar" class="hidden fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center p-4">
+        <div class="relative w-full h-full flex flex-col items-center justify-center">
+            <!-- Tombol Tutup -->
+            <button onclick="tutupGambarBesar()" class="absolute top-4 right-4 text-white text-2xl w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all z-10">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <!-- Konten Gambar -->
+            <div class="relative flex items-center justify-center w-full h-full max-w-4xl max-h-[80vh]">
+                <!-- Tombol Geser Kiri -->
+                <button id="tombolGeserKiri" class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 text-white text-2xl w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all z-10 disabled:opacity-30" disabled>
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+
+                <!-- Gambar -->
+                <img id="gambarBesar" src="" alt="Gambar Besar" class="w-auto h-auto max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+
+                <!-- Tombol Geser Kanan -->
+                <button id="tombolGeserKanan" class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-white text-2xl w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all z-10 disabled:opacity-30" disabled>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Indikator Nomor Gambar -->
+            <div class="mt-4 text-white text-lg font-medium">
+                <span id="nomorGambar">1</span> dari <span id="totalGambar">1</span
+</div>
+        </div>
+    </div>
+
+    <!-- Firebase & Script -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script>
+        // KONFIGURASI FIREBASE - Sesuaikan dengan milik kamu
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUA0AH0bXHcm3w85wrRi1uBGJBkB4ClJg",
+            authDomain: "sistemkeamanan-9a570.firebaseapp.com",
+            databaseURL: "https://sistemkeamanan-9a570-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sistemkeamanan-9a570",
+            storageBucket: "sistemkeamanan-9a570.appspot.com",
+            messagingSenderId: "27616356342",
+            appId: "1:27616356342:web:536535cb642902dd8f9350",
+            measurementId: "G-MKYG3HKFKN"
+        };
+
+        // Inisialisasi Firebase
+        let db;
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.database();
+        } catch (err) {
+            tampilkanNotifikasi('error', 'Koneksi Gagal', 'Tidak bisa terhubung ke server Firebase: ' + err.message);
+            ubahStatusLoading("Gagal terhubung ke server", true);
+        }
+
+        // Variabel Global
+        let signaturePad;
+        let dataTerpilih = null;
+        let daftarGambar = [];
+        let indeksGambarSaatIni = 0;
+        let dataSemua = []; // Menyimpan semua data untuk keperluan pencarian
+
+        // --- FUNGSI UBAH STATUS LOADING ---
+        function ubahStatusLoading(teks, error = false) {
+            const tbody = document.getElementById('tabelCekout');
+            const teksElemen = document.getElementById('teksStatus');
+            
+            if (teksElemen) {
+                teksElemen.textContent = teks;
+                teksElemen.className = `font-medium ${error ? 'text-red-500' : 'text-neutral'}`;
+            }
+            
+            if (error) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="border-b border-blue-100 p-8 text-center text-responsive text-red-500">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl mb-3"></i>
+                            <p class="font-medium">${teks}</p>
+                        </td>
+                    </tr>`;
+            }
+        }
+
+        // --- FUNGSI NOTIFIKASI ---
+        function tampilkanNotifikasi(jenis, judul, deskripsi) {
+            const container = document.getElementById('notificationContainer');
+            
+            const notif = document.createElement('div');
+            notif.className = `notification ${jenis} bg-white rounded-xl shadow-lg p-4 border-l-4 mb-4 transform transition-all duration-300 translate-x-0 max-w-xs w-full ${
+                jenis === 'success' ? 'border-green-500' : 
+                jenis === 'error' ? 'border-red-500' : 'border-blue-500'
+            }`;
+            
+            let ikon = '';
+            if (jenis === 'success') ikon = '<i class="fa-solid fa-check text-green-500 text-xl"></i>';
+            else if (jenis === 'error') ikon = '<i class="fa-solid fa-xmark text-red-500 text-xl"></i>';
+            else if (jenis === 'info') ikon = '<i class="fa-solid fa-circle-info text-blue-500 text-xl"></i>';
+            
+            notif.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div>${ikon}</div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-dark">${judul}</h4>
+                        <p class="text-sm text-neutral mt-1">${deskripsi}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-neutral hover:text-dark">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(notif);
+            setTimeout(() => {
+                notif.style.transform = 'translateX(100%)';
+                setTimeout(() => notif.remove(), 300);
+            }, 5000);
+        }
+
+        // --- FUNGSI TAMBAHAN: TAMPILKAN GAMBAR BARANG ---
+        function tampilkanGambarBarang(data) {
+            const wadahGambar = document.getElementById('tampilanGambarBarang');
+            daftarGambar = [];
+            
+            if (data && data.fotoPeralatan && Array.isArray(data.fotoPeralatan) && data.fotoPeralatan.length > 0) {
+                wadahGambar.innerHTML = '';
+                
+                data.fotoPeralatan.forEach((fotoSrc, index) => {
+                    if (typeof fotoSrc === 'string' && (fotoSrc.startsWith('data:image/') || fotoSrc.startsWith('http'))) {
+                        daftarGambar.push(fotoSrc);
+                        
+                        const elemenGambar = document.createElement('div');
+                        elemenGambar.className = 'relative group aspect-square cursor-pointer';
+                        elemenGambar.onclick = function() { bukaGambarBesar(index); };
+                        elemenGambar.innerHTML = `
+                            <img 
+                                src="${fotoSrc}" 
+                                alt="Foto Barang ${index + 1}" 
+                                class="w-full h-full object-cover rounded-lg shadow-md border border-blue-100 hover:scale-[1.03] transition-transform duration-200"
+                                loading="lazy"
+                                onerror="this.onerror=null; this.parentElement.innerHTML='<p class=\'text-red-500 italic text-center p-4 border rounded-lg\'>Gagal muat</p>';"
+                            >
+                            <span class="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">${index + 1}</span>
+                        `;
+                        wadahGambar.appendChild(elemenGambar);
+                    }
+                });
+            } else {
+                wadahGambar.innerHTML = '<p class="text-neutral italic text-center col-span-full">Tidak ada foto dokumentasi barang</p>';
+            }
+        }
+
+        // --- FUNGSI TAMBAHAN: BUKA GAMBAR UKURAN BESAR ---
+        function bukaGambarBesar(indeks) {
+            if (daftarGambar.length === 0) {
+                tampilkanNotifikasi('info', 'Tidak Ada Gambar', 'Tidak ada foto yang bisa diperbesar');
+                return;
+            }
+            
+            indeksGambarSaatIni = Math.max(0, Math.min(indeks, daftarGambar.length - 1));
+            
+            const modal = document.getElementById('modalGambarBesar');
+            const gambarBesar = document.getElementById('gambarBesar');
+            const nomorGambar = document.getElementById('nomorGambar');
+            const totalGambar = document.getElementById('totalGambar');
+            const tombolKiri = document.getElementById('tombolGeserKiri');
+            const tombolKanan = document.getElementById('tombolGeserKanan');
+            
+            gambarBesar.src = daftarGambar[indeksGambarSaatIni];
+            nomorGambar.textContent = indeksGambarSaatIni + 1;
+            totalGambar.textContent = daftarGambar.length;
+            
+            tombolKiri.disabled = indeksGambarSaatIni === 0;
+            tombolKanan.disabled = indeksGambarSaatIni === daftarGambar.length - 1;
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // --- FUNGSI TAMBAHAN: TUTUP GAMBAR BESAR ---
+        function tutupGambarBesar() {
+            const modal = document.getElementById('modalGambarBesar');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // --- FUNGSI TAMBAHAN: GESER GAMBAR ---
+        function geserGambar(arah) {
+            if (arah === 'kiri' && indeksGambarSaatIni > 0) {
+                indeksGambarSaatIni--;
+            } else if (arah === 'kanan' && indeksGambarSaatIni < daftarGambar.length - 1) {
+                indeksGambarSaatIni++;
+            } else {
+                return;
+            }
+            
+            const gambarBesar = document.getElementById('gambarBesar');
+            const nomorGambar = document.getElementById('nomorGambar');
+            const tombolKiri = document.getElementById('tombolGeserKiri');
+            const tombolKanan = document.getElementById('tombolGeserKanan');
+            
+            gambarBesar.src = daftarGambar[indeksGambarSaatIni];
+            nomorGambar.textContent = indeksGambarSaatIni + 1;
+            
+            tombolKiri.disabled = indeksGambarSaatIni === 0;
+            tombolKanan.disabled = indeksGambarSaatIni === daftarGambar.length - 1;
+        }
+
+        // --- FUNGSI TAMBAHAN: TAMBAHKAN EVENT LISTENER UNTUK GESER ---
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('tombolGeserKiri').addEventListener('click', () => geserGambar('kiri'));
+            document.getElementById('tombolGeserKanan').addEventListener('click', () => geserGambar('kanan'));
+            
+            let posisiAwal = 0;
+            const modalGambar = document.getElementById('modalGambarBesar');
+            
+            modalGambar.addEventListener('touchstart', (e) => {
+                posisiAwal = e.touches[0].clientX;
+            });
+            
+            modalGambar.addEventListener('touchend', (e) => {
+                const posisiAkhir = e.changedTouches[0].clientX;
+                const selisih = posisiAkhir - posisiAwal;
+                
+                if (selisih > 50) {
+                    geserGambar('kiri');
+                } else if (selisih < -50) {
+                    geserGambar('kanan');
+                }
+            });
+            
+            modalGambar.addEventListener('click', (e) => {
+                if (e.target === modalGambar) {
+                    tutupGambarBesar();
+                }
+            });
+
+            // Event untuk Pencarian
+            const inputPencarian = document.getElementById('inputPencarian');
+            const tombolResetPencarian = document.getElementById('tombolResetPencarian');
+            
+            inputPencarian.addEventListener('input', function() {
+                const kataKunci = this.value.trim().toLowerCase();
+                tombolResetPencarian.classList.toggle('hidden', kataKunci === '');
+                filterData(kataKunci);
+            });
+            
+            tombolResetPencarian.addEventListener('click', function() {
+                inputPencarian.value = '';
+                tombolResetPencarian.classList.add('hidden');
+                filterData('');
+            });
+        });
+
+        // --- FUNGSI FILTER DATA BERDASARKAN KATA KUNCI ---
+        function filterData(kataKunci) {
+            const tbody = document.getElementById('tabelCekout');
+            const spanJumlah = document.getElementById('jumlahData');
+            
+            if (kataKunci === '') {
+                tampilkanDataKeTabel(dataSemua);
+                spanJumlah.textContent = `${dataSemua.length} Data`;
+                return;
+            }
+            
+            const dataTerfilter = dataSemua.filter(item => {
+                return item.namaVendor.toLowerCase().includes(kataKunci) || 
+                       (item.pekerjaan && item.pekerjaan.toLowerCase().includes(kataKunci));
+            });
+            
+            if (dataTerfilter.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="border-b border-blue-100 p-8 text-center text-responsive text-neutral">
+                            <i class="fa-solid fa-magnifying-glass text-2xl mb-3 text-neutral/70"></i>
+                            <p class="font-medium">Tidak ada data yang cocok dengan pencarian</p>
+                        </td>
+                    </tr>`;
+                spanJumlah.textContent = `0 Data`;
+                return;
+            }
+            
+            tampilkanDataKeTabel(dataTerfilter);
+            spanJumlah.textContent = `${dataTerfilter.length} Data`;
+        }
+
+        // --- FUNGSI TAMPILKAN DATA KE TABEL ---
+        function tampilkanDataKeTabel(daftarTampil) {
+            const tbody = document.getElementById('tabelCekout');
+            tbody.innerHTML = '';
+
+            daftarTampil.forEach((item, idx) => {
+                let teksSisa = '';
+                if (item.daftarBarang && Array.isArray(item.daftarBarang)) {
+                    teksSisa = item.daftarBarang.map(brg => {
+                        const jumlahAwal = parseInt(brg.jumlahAwal || brg.jumlah || 0) || 0;
+                        const jumlahDikembalikan = parseInt(brg.jumlahDikembalikan || 0) || 0;
+                        const sisa = jumlahAwal - jumlahDikembalikan;
+                        return `${brg.nama || 'Barang'}: ${sisa}`;
+                    }).join('<br>');
+                } else {
+                    teksSisa = '1 Barang';
+                }
+
+                let statusText = 'Belum Cekout';
+                let statusClass = 'bg-blue-100 text-blue-800';
+                if (item.status === 'sebagian dikembalikan') {
+                    statusText = 'Sebagian Dikembalikan';
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                }
+
+                const baris = document.createElement('tr');
+                baris.className = 'hover:bg-blue-50 transition-all';
+                baris.innerHTML = `
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top">${idx + 1}</td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top">
+                        <div class="font-semibold text-dark uppercase">${item.namaVendor}</div>
+                        <div class="text-sm text-neutral uppercase">${item.pekerjaan}</div>
+                    </td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top font-semibold uppercase">${item.posMasuk}</td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top">
+                        <div>${item.tanggal}</div>
+                        <div class="text-sm text-neutral">${item.jamMasuk}</div>
+                    </td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top">${teksSisa || '-'}</td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top">
+                        <span class="status-label ${statusClass} uppercase">${statusText}</span>
+                    </td>
+                    <td class="border-b border-blue-100 p-4 text-responsive align-top text-center">
+                        <button onclick="bukaFormCekout('${item.id}')" class="bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all">
+                            <i class="fa-solid fa-check-to-slot"></i> Proses
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(baris);
+            });
+        }
+
+        // --- MUAT DATA CEKOUT ---
+        function muatDataCekout() {
+            const tbody = document.getElementById('tabelCekout');
+            const spanJumlah = document.getElementById('jumlahData');
+            
+            ubahStatusLoading("Sedang memuat data...");
+            dataSemua = []; // Kosongkan data lama
+
+            if (!db) {
+                ubahStatusLoading("Koneksi ke database gagal", true);
+                spanJumlah.textContent = `0 Data`;
+                return;
+            }
+
+            db.ref('/data_vendor').once('value')
+            .then((snapshot) => {
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        try {
+                            const val = child.val();
+                            const key = child.key;
+                            
+                            if (!val || typeof val !== 'object') return;
+
+                            val.namaVendor = val.namaVendor || '-';
+                            val.pekerjaan = val.pekerjaan || '-';
+                            val.tanggal = val.tanggal || '-';
+                            val.jamMasuk = val.jamMasuk || '-';
+                            val.posMasuk = val.posMasuk || '-';
+                            val.status = val.status || 'belum cekout';
+
+                            let totalSisa = 0;
+                            let masihAdaSisa = false;
+
+                            if (val.daftarBarang && Array.isArray(val.daftarBarang)) {
+                                val.daftarBarang.forEach(brg => {
+                                    const jumlahAwal = parseInt(brg.jumlahAwal || brg.jumlah || 0) || 0;
+                                    const jumlahDikembalikan = parseInt(brg.jumlahDikembalikan || 0) || 0;
+                                    const sisa = jumlahAwal - jumlahDikembalikan;
+                                    
+                                    totalSisa += sisa;
+                                    if (sisa > 0) masihAdaSisa = true;
+                                    
+                                    brg.sisa = sisa > 0 ? sisa : 0;
+                                });
+                            } else {
+                                masihAdaSisa = true;
+                                totalSisa = 1;
+                            }
+
+                            if (masihAdaSisa && val.status !== 'sudah cekout') {
+                                dataSemua.push({
+                                    id: key,
+                                    ...val,
+                                    totalSisa: totalSisa
+                                });
+                            }
+                        } catch (err) {
+                            // Lewati data yang bermasalah
+                        }
+                    });
+                }
+
+                if (dataSemua.length === 0) {
+                    ubahStatusLoading("Tidak ada data yang menunggu cekout");
+                    spanJumlah.textContent = `0 Data`;
+                    return;
+                }
+
+                spanJumlah.textContent = `${dataSemua.length} Data`;
+                tampilkanDataKeTabel(dataSemua);
+            })
+            .catch((err) => {
+                ubahStatusLoading(`Gagal memuat data: ${err.message}`, true);
+                tampilkanNotifikasi('error', 'Gagal', 'Tidak bisa memuat daftar cekout: ' + err.message);
+            });
+        }
+
+        // --- BUKA FORM CEKOUT ---
+        function bukaFormCekout(id) {
+            db.ref(`/data_vendor/${id}`).once('value')
+            .then((snapshot) => {
+                if (!snapshot.exists()) {
+                    tampilkanNotifikasi('error', 'Data Tidak Ditemukan', 'Data yang dipilih sudah tidak tersedia');
+                    return;
+                }
+
+                dataTerpilih = { id: id, ...snapshot.val() };
+                const data = dataTerpilih;
+
+                document.getElementById('detailNamaVendor').textContent = data.namaVendor || '-';
+                document.getElementById('detailPekerjaan').textContent = data.pekerjaan || '-';
+                document.getElementById('detailTanggal').textContent = data.tanggal || '-';
+                document.getElementById('detailJamMasuk').textContent = data.jamMasuk || '-';
+                document.getElementById('detailPosMasuk').textContent = data.posMasuk || '-';
+
+                let statusText = 'Belum Cekout';
+                let statusClass = 'bg-blue-100 text-blue-800';
+                if (data.status === 'sebagian dikembalikan') {
+                    statusText = 'Sebagian Dikembalikan';
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                }
+                document.getElementById('detailStatus').textContent = statusText;
+                document.getElementById('detailStatus').className = `status-status ${statusClass}`;
+
+                const sekarang = new Date();
+                const jamKeluar = `${sekarang.getHours().toString().padStart(2, '0')}:${sekarang.getMinutes().toString().padStart(2, '0')}`;
+                document.getElementById('jamKeluar').value = jamKeluar;
+
+                tampilkanGambarBarang(data);
+
+                const containerBarang = document.getElementById('formBarangContainer');
+                containerBarang.innerHTML = '';
+
+                if (data.daftarBarang && Array.isArray(data.daftarBarang)) {
+                    data.daftarBarang.forEach((brg, index) => {
+                        const jumlahAwal = parseInt(brg.jumlahAwal || brg.jumlah || 0) || 0;
+                        const jumlahDikembalikan = parseInt(brg.jumlahDikembalikan || 0) || 0;
+                        const sisaSkrg = jumlahAwal - jumlahDikembalikan;
+
+                        const itemBarang = document.createElement('div');
+                        itemBarang.className = 'bg-white border border-blue-200 rounded-xl p-4';
+                        itemBarang.innerHTML = `
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                                <div>
+                                    <label class="block text-xs text-neutral mb-1 uppercase">Nama Barang</label>
+                                    <div class="font-semibold uppercase">${brg.nama || '-'}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-neutral mb-1 uppercase">Sisa Saat Ini</label>
+                                    <div class="font-semibold">${sisaSkrg}</div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-neutral mb-1 uppercase">Jumlah Dikembalikan</label>
+                                    <input type="number" min="0" max="${sisaSkrg}" value="${sisaSkrg}" 
+                                        id="input-${index}" 
+                                        class="w-full border border-blue-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                        placeholder="0">
+                                </div>
+                            </div>
+                        `;
+                        containerBarang.appendChild(itemBarang);
+                    });
+                } else {
+                    const itemBarang = document.createElement('div');
+                    itemBarang.className = 'bg-white border border-blue-200 rounded-xl p-4';
+                    itemBarang.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                            <div>
+                                <label class="block text-xs text-neutral mb-1 uppercase">Nama Barang</label>
+                                <div class="font-semibold uppercase">Barang Umum</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-neutral mb-1 uppercase">Sisa Saat Ini</label>
+                                <div class="font-semibold">1</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-neutral mb-1 uppercase">Jumlah Dikembalikan</label>
+                                <input type="number" min="0" max="1" value="1" 
+                                    id="input-0" 
+                                    class="w-full border border-blue-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="0">
+                            </div>
+                        </div>
+                    `;
+                    containerBarang.appendChild(itemBarang);
+                    data.daftarBarang = [{ nama: 'Barang Umum', jumlahAwal: 1, jumlahDikembalikan: 0 }];
+                }
+
+                document.getElementById('modalFormCekout').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+
+                setTimeout(() => {
+                    const canvas = document.getElementById('ttdPetugas');
+                    if (canvas) {
+                        if (signaturePad) {
+                            signaturePad.off();
+                            signaturePad = null;
+                        }
+                        
+                        const rect = canvas.parentElement.getBoundingClientRect();
+                        canvas.width = rect.width - 32;
+                        canvas.height = 120;
+                        
+                        signaturePad = new SignaturePad(canvas, {
+                            backgroundColor: 'rgb(255, 255, 255)',
+                            minWidth: 2,
+                            maxWidth: 4,
+                            throttle: 16,
+                            minDistance: 2
+                        });
+                    }
+                }, 200);
+            })
+            .catch((err) => {
+                tampilkanNotifikasi('error', 'Gagal', 'Tidak bisa membuka form cekout: ' + err.message);
+            });
+        }
+
+        // --- SIMPAN DATA CEKOUT ---
+        function simpanCekout() {
+            if (!dataTerpilih) {
+                tampilkanNotifikasi('error', 'Data Belum Dipilih', 'Silakan pilih data terlebih dahulu');
+                return;
+            }
+
+            if (signaturePad.isEmpty()) {
+                tampilkanNotifikasi('error', 'Tanda Tangan Kosong', 'Silakan buat tanda tangan terlebih dahulu');
+                return;
+            }
+
+            const namaPetugas = document.getElementById('namaPetugas').value.trim();
+            if (!namaPetugas) {
+                tampilkanNotifikasi('error', 'Nama Petugas Kosong', 'Silakan masukkan nama petugas keamanan');
+                return;
+            }
+
+            const daftarBarangUpdate = [...dataTerpilih.daftarBarang];
+            let semuaSelesai = true;
+            let adaPengembalian = false;
+
+            try {
+                daftarBarangUpdate.forEach((brg, index) => {
+                    const jumlahAwal = parseInt(brg.jumlahAwal || brg.jumlah || 0) || 0;
+                    const jumlahDikembalikanLama = parseInt(brg.jumlahDikembalikan || 0) || 0;
+                    const sisaLama = jumlahAwal - jumlahDikembalikanLama;
+                    const dikembalikanSekarang = parseInt(document.getElementById(`input-${index}`).value) || 0;
+                    
+                    if (dikembalikanSekarang < 0 || dikembalikanSekarang > sisaLama) {
+                        throw new Error(`Jumlah barang ${brg.nama || ''} tidak valid`);
+                    }
+
+                    const jumlahDikembalikanBaru = jumlahDikembalikanLama + dikembalikanSekarang;
+                    const sisaBaru = jumlahAwal - jumlahDikembalikanBaru;
+                    
+                    brg.jumlahAwal = jumlahAwal;
+                    brg.jumlahDikembalikan = jumlahDikembalikanBaru;
+                    brg.sisa = sisaBaru > 0 ? sisaBaru : 0;
+                    
+                    if (sisaBaru > 0) semuaSelesai = false;
+                    if (dikembalikanSekarang > 0) adaPengembalian = true;
+                });
+
+                if (!adaPengembalian) {
+                    tampilkanNotifikasi('error', 'Tidak Ada Pengembalian', 'Silakan isi minimal satu barang yang dikembalikan');
+                    return;
+                }
+
+                const statusBaru = semuaSelesai ? 'sudah cekout' : 'sebagian dikembalikan';
+
+                const dataUpdate = {
+                    daftarBarang: daftarBarangUpdate,
+                    status: statusBaru,
+                    jamKeluar: document.getElementById('jamKeluar').value,
+                    namaPetugas: namaPetugas.toUpperCase(),
+                    tandaTanganPetugas: signaturePad.toDataURL(),
+                    waktuProsesCekout: new Date().toISOString()
+                };
+
+                db.ref(`/data_vendor/${dataTerpilih.id}`).update(dataUpdate)
+                .then(() => {
+                    tampilkanNotifikasi('success', 'Berhasil', 'Data pengembalian barang disimpan');
+                    tutupModalCekout();
+                    muatDataCekout();
+                })
+                .catch((err) => {
+                    tampilkanNotifikasi('error', 'Gagal Simpan', 'Terjadi kesalahan saat menyimpan data: ' + err.message);
+                });
+
+            } catch (err) {
+                tampilkanNotifikasi('error', 'Input Tidak Valid', err.message);
+            }
+        }
+
+        // --- TUTUP MODAL ---
+        function tutupModalCekout() {
+            document.getElementById('modalFormCekout').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            dataTerpilih = null;
+            if (signaturePad) signaturePad.clear();
+            document.getElementById('namaPetugas').value = '';
+            daftarGambar = [];
+            document.getElementById('tampilanGambarBarang').innerHTML = '<p class="text-neutral italic text-center col-span-full">Memuat gambar...</p>';
+        }
+
+        // --- BERSIHKAN TANDA TANGAN ---
+        function bersihkanTtd() {
+            if (signaturePad && !signaturePad.isEmpty()) {
+                signaturePad.clear();
+                tampilkanNotifikasi('info', 'Dibersihkan', 'Area tanda tangan sudah dikosongkan');
+            } else {
+                tampilkanNotifikasi('info', 'Info', 'Area tanda tangan sudah kosong');
+            }
+        }
+
+        // --- MUAT DATA SAAT HALAMAN DIBUKA ---
+        document.addEventListener('DOMContentLoaded', function() {
+            muatDataCekout();
+            
+            document.getElementById('modalFormCekout').addEventListener('click', function(e) {
+                if (e.target === this) tutupModalCekout();
+            });
+        });
+    </script>
+
+</body>
+</html>
