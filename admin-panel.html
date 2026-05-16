@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - PT. United Tractors Pandu Engineering</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                        utYellow: '#FFD600',
+                        utDark: '#1a1a1a'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s; }
+        body.light { background-color: #f8fafc; }
+        body.dark { background-color: #0f172a; color: #f1f5f9; }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+        .tab-active { border-bottom: 4px solid #FFD600; color: #1a1a1a; font-weight: 800; }
+        .dark .tab-active { color: #FFD600; }
+        .hidden { display: none !important; }
+        .modal-bg { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); }
+        .img-zoom:hover { transform: scale(1.05); cursor: zoom-in; transition: 0.3s; z-index: 10; }
+        .badge-in { @apply bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-[9px] font-black uppercase border border-amber-200 inline-block; }
+        .badge-out { @apply bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-[9px] font-black uppercase border border-emerald-200 inline-block; }
+        .badge-partial { @apply bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-[9px] font-black uppercase border border-blue-200 inline-block; }
+        .dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; }
+        .dark .text-slate-800 { color: #f1f5f9 !important; }
+        .dark .text-slate-400 { color: #94a3b8 !important; }
+        .dark .bg-slate-50 { background-color: #334155 !important; }
+        .dark .border-slate-100 { border-color: #334155 !important; }
+        .dark .divide-slate-50 { divide-color: #334155 !important; }
+        @media (max-width: 768px) {
+            #vendorTableBody tr { display: block; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 1.5rem; padding: 1rem; background: white; }
+            .dark #vendorTableBody tr { border-color: #334155; background: #1e293b; }
+            #vendorTableBody td { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0 !important; border: none !important; text-align: right !important; }
+            #vendorTableBody td::before { content: attr(data-label); font-weight: 800; text-transform: uppercase; font-size: 10px; color: #94a3b8; text-align: left; }
+            .action-cell { justify-content: center !important; border-top: 1px solid #f1f5f9 !important; margin-top: 0.5rem; padding-top: 1rem !important; }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="light">
+
+    <div id="loginPage" class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white p-8 md:p-10 rounded-[2.5rem] card-shadow w-full max-w-sm text-center border border-slate-100 animate-pop">
+            <div class="mb-6 flex justify-center">
+                <img src="logo-utpe1.png" alt="Logo" class="h-16 md:h-20 object-contain">
+            </div>
+            <h2 class="text-sm md:text-base font-black text-slate-800 mb-1 uppercase leading-tight">PT. UNITED TRACTORS PANDU ENGINEERING</h2>
+            <p class="text-[10px] text-slate-400 mb-8 font-bold uppercase tracking-widest italic">Security Monitoring System</p>
+            <div class="relative mb-4">
+                <input type="password" id="adminPass" placeholder="Sandi Akses" 
+                    class="w-full bg-slate-50 border border-slate-200 p-4 pr-20 rounded-2xl focus:ring-4 focus:ring-yellow-400 outline-none text-center font-bold transition-all dark:text-slate-800"
+                    onkeyup="validatePassword(this.value)">
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <span id="passIndicator" class="hidden"><i id="indicatorIcon" class="fa-solid"></i></span>
+                    <button type="button" onclick="togglePassword()" class="text-slate-400 hover:text-yellow-600">
+                        <i id="eyeIcon" class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+            <button id="btnLogin" onclick="handleLogin()" class="w-full bg-utYellow text-utDark py-4 rounded-2xl font-black hover:brightness-90 transition-all shadow-lg disabled:bg-slate-300 transform active:scale-95" disabled>MASUK KE PANEL</button>
+        </div>
+    </div>
+
+    <div id="mainDashboard" class="hidden">
+        <nav class="bg-white border-b border-slate-100 px-4 md:px-6 py-4 sticky top-0 z-40 shadow-sm">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-2 md:gap-3">
+                    <img src="logo-utpe1.png" alt="UTPE" class="h-8 md:h-10 object-contain">
+                    <div>
+                        <h1 class="text-sm md:text-lg font-black text-slate-800 tracking-tighter uppercase leading-none">PT. UNITED TRACTORS</h1>
+                        <p class="text-[8px] md:text-[10px] font-bold text-[#EAB308] tracking-wider">PANDU ENGINEERING</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleDarkMode()" class="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-yellow-400 w-8 h-8 md:w-10 md:h-10 rounded-xl hover:scale-110 transition-all">
+                        <i id="darkIcon" class="fa-solid fa-sun"></i>
+                    </button>
+                    <button onclick="exportByTab()" class="bg-red-50 text-red-600 px-3 md:px-5 py-2 rounded-xl text-[10px] md:text-xs font-bold border border-red-100 hover:bg-red-600 hover:text-white transition-all">
+                        <i class="fa-solid fa-file-pdf"></i> <span class="hidden md:inline">PDF Data List</span>
+                    </button>
+                    <button onclick="handleLogout()" class="bg-slate-100 text-slate-500 w-8 h-8 md:w-10 md:h-10 rounded-xl hover:bg-red-500 hover:text-white transition-all"><i class="fa-solid fa-power-off text-xs md:text-base"></i></button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-4 md:p-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8 text-center">
+                <div class="bg-white p-5 md:p-7 rounded-[1.5rem] md:rounded-[2rem] border-b-4 border-utYellow card-shadow">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Vendor Hari Ini / Aktif</p>
+                    <h3 id="statTotal" class="text-2xl md:text-4xl font-black mt-1 text-slate-800">0</h3>
+                </div>
+                <div class="bg-white p-5 md:p-7 rounded-[1.5rem] md:rounded-[2rem] border-b-4 border-orange-500 card-shadow">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Peralatan di Lokasi</p>
+                    <h3 id="statItems" class="text-2xl md:text-4xl font-black mt-1 text-slate-800">0</h3>
+                </div>
+                <div class="bg-white p-5 md:p-7 rounded-[1.5rem] md:rounded-[2rem] border-b-4 border-emerald-500 card-shadow">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Selesai Cek-Out</p>
+                    <h3 id="statDone" class="text-2xl md:text-4xl font-black mt-1 text-slate-800">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[1.5rem] md:rounded-[2.5rem] card-shadow overflow-hidden border border-slate-100 mb-8">
+                <div class="p-4 md:p-6 bg-white border-b border-slate-100 flex items-center gap-3 dark:bg-slate-800">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" onkeyup="renderUI()" placeholder="Cari Nama Vendor atau No. Polisi..." 
+                            class="w-full bg-slate-50 border border-slate-200 pl-11 pr-4 py-3 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-utYellow transition-all dark:bg-slate-700 dark:text-white dark:border-slate-600">
+                    </div>
+                </div>
+
+                <div class="flex border-b border-slate-50 bg-slate-50/50 text-center dark:bg-slate-800">
+                    <button id="tabIn" onclick="switchTab('in')" class="flex-1 py-4 md:py-5 text-[10px] md:text-xs font-black uppercase tracking-widest tab-active">Cek-In / Aktif</button>
+                    <button id="tabOut" onclick="switchTab('out')" class="flex-1 py-4 md:py-5 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400">Cek-Out Selesai</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="hidden md:table-header-group">
+                            <tr class="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-50/80 dark:bg-slate-900">
+                                <th class="px-8 py-5">Waktu</th>
+                                <th class="px-8 py-4">Vendor & Pekerjaan</th>
+                                <th class="px-8 py-4 text-center">No. Polisi</th>
+                                <th class="px-8 py-4 text-center">Status</th>
+                                <th class="px-8 py-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vendorTableBody" class="text-sm divide-y divide-slate-50"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
+                <div class="flex justify-between items-center">
+                    <p id="storageUsed" class="text-[9px] font-black text-utYellow uppercase bg-utDark px-2 py-0.5 rounded">0 KB</p>
+                    <p id="storagePercentText" class="text-[9px] font-bold text-slate-400 uppercase">0%</p>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 mt-2 overflow-hidden">
+                    <div id="storageBar" class="bg-utYellow h-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 modal-bg">
+        <div class="bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[2rem] md:rounded-[3rem] shadow-2xl p-6 md:p-10 no-scrollbar animate-pop modal-content-wrapper">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-black text-slate-800 uppercase leading-tight">Detail Log Keamanan</h2>
+                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                        <p class="text-[11px] text-yellow-600 font-bold italic" id="m_tanggal"></p>
+                        <span id="m_status_badge"></span>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="bg-slate-100 dark:bg-slate-700 text-slate-500 w-10 h-10 rounded-full hover:bg-red-500 hover:text-white transition-all"><i class="fa-solid fa-times"></i></button>
+            </div>
+
+            <div class="mb-8 overflow-hidden border border-slate-100 rounded-2xl">
+                <table class="w-full text-left border-collapse">
+                    <tbody class="text-xs md:text-sm">
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase w-1/3 md:w-1/4">Nama Vendor</td><td class="p-4 font-bold text-yellow-700 uppercase" id="m_vendor_row">-</td></tr>
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">PIC (User)</td><td class="p-4 font-bold text-slate-700 uppercase" id="m_pic_row">-</td></tr>
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">No. Polisi</td><td class="p-4 font-bold text-slate-700" id="m_nopol_row">-</td></tr>
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">Area Kerja</td><td class="p-4 font-bold text-slate-700 uppercase" id="m_area_row">-</td></tr>
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">Masuk Pos</td><td class="p-4 font-bold text-slate-700" id="m_pos_row">-</td></tr>
+                        <tr class="border-b border-slate-50"><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">Keluar Pos</td><td class="p-4 font-bold text-slate-700" id="m_pos_out_row">-</td></tr>
+                        <tr><td class="bg-slate-50/80 p-4 font-black text-slate-400 uppercase">Kegiatan Pekerjaan</td><td class="p-4 font-bold text-slate-700 italic" id="m_pekerjaan_row">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mb-8 border border-slate-100 rounded-2xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[500px]">
+                        <thead class="bg-slate-50 text-[9px] uppercase font-black text-slate-500 dark:bg-slate-900">
+                            <tr>
+                                <th class="p-4 text-center w-12">No</th>
+                                <th class="p-4">Nama Peralatan</th>
+                                <th class="p-4 text-center">Awal</th>
+                                <th class="p-4 text-center text-emerald-600">Kembali</th>
+                                <th class="p-4 text-center text-orange-600">Sisa</th>
+                                <th class="p-4 text-left">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="m_table_barang" class="text-[11px] md:text-xs font-bold text-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-camera text-yellow-500"></i> Foto Cek-In</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="m_foto_masuk"></div>
+                    </div>
+                    <div id="m_section_out">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-truck-ramp-box text-emerald-500"></i> Foto Cek-Out</h4>
+                        <div class="space-y-4" id="m_foto_keluar_container"></div>
+                    </div>
+                    <div id="m_section_tambahan" class="mt-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-images text-blue-500"></i> Foto Tambahan</h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="m_foto_tambahan_container"></div>
+                    </div>
+                </div>
+                <div class="space-y-6 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div id="m_himbauan_box" class="hidden bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 rounded-2xl animate-pop">
+                            <div class="flex items-start gap-2.5">
+                                <i class="fa-solid fa-circle-exclamation text-amber-600 dark:text-amber-400 mt-0.5 text-xs"></i>
+                                <div>
+                                    <p class="text-[10px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-0.5">Catatan Himbauan Keamanan</p>
+                                    <p id="m_himbauan_text" class="text-[11px] text-amber-700 dark:text-slate-300 font-medium leading-relaxed italic"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="m_deskripsi_checkout_box" class="hidden bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl animate-pop">
+                            <div class="flex items-start gap-2.5">
+                                <i class="fa-solid fa-align-left text-slate-500 dark:text-slate-400 mt-0.5 text-xs"></i>
+                                <div class="w-full">
+                                    <p class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Keterangan Tambahan (Form Cek-Out)</p>
+                                    <p id="m_deskripsi_checkout_text" class="text-[11px] text-slate-700 dark:text-slate-300 font-bold leading-relaxed bg-white dark:bg-slate-900 border p-3 rounded-xl italic"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i class="fa-solid fa-signature"></i> Verifikasi</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border text-center dark:bg-slate-800">
+                                <p class="text-[8px] font-black text-slate-400 uppercase mb-2">Vendor</p>
+                                <img id="m_ttd_v" class="h-16 mx-auto object-contain mix-blend-multiply dark:mix-blend-normal">
+                                <p class="text-[10px] font-bold mt-2 truncate" id="m_nama_v"></p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border text-center dark:bg-slate-800">
+                                <p class="text-[8px] font-black text-slate-400 uppercase mb-2">Security</p>
+                                <img id="m_ttd_s" class="h-16 mx-auto object-contain mix-blend-multiply dark:mix-blend-normal">
+                                <p class="text-[10px] font-bold mt-2 truncate" id="m_nama_s"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="hidden fixed inset-0 z-[100] modal-bg flex items-center justify-center p-4">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-white text-3xl"><i class="fa-solid fa-circle-xmark"></i></button>
+        <button onclick="prevImg()" id="prevBtn" class="absolute left-4 top-1/2 text-white text-4xl"><i class="fa-solid fa-chevron-left"></i></button>
+        <button onclick="nextImg()" id="nextBtn" class="absolute right-4 top-1/2 text-white text-4xl"><i class="fa-solid fa-chevron-right"></i></button>
+        <img id="lightboxImg" class="max-w-full max-h-[80vh] rounded-xl shadow-2xl">
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUA0AH0bXHcm3w85wrRi1uBGJBkB4ClJg",
+            authDomain: "sistemkeamanan-9a570.firebaseapp.com",
+            databaseURL: "https://sistemkeamanan-9a570-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sistemkeamanan-9a570",
+            storageBucket: "sistemkeamanan-9a570.firebasestorage.app",
+            messagingSenderId: "317927546609",
+            appId: "1:317927546609:web:536535cb642902dd8f9350"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let rawData = []; let currentTab = 'in'; let lbImgs = []; let lbIdx = 0;
+        const CORRECT_PASS = "admin";
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.body.classList.toggle('dark', isDark);
+            document.body.classList.toggle('light', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('darkIcon').className = isDark ? "fa-solid fa-sun" : "fa-solid fa-moon";
+        }
+
+        window.onload = function() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.classList.add('dark');
+                document.body.classList.remove('light');
+                document.getElementById('darkIcon').className = "fa-sun";
+            }
+            if (sessionStorage.getItem('isLogged') === 'true') {
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                initData();
+            }
+        };
+
+        function validatePassword(val) {
+            const btn = document.getElementById('btnLogin');
+            const indicator = document.getElementById('passIndicator');
+            const icon = document.getElementById('indicatorIcon');
+            if (val.length > 0) {
+                indicator.classList.remove('hidden');
+                if (val === CORRECT_PASS) {
+                    icon.className = "fa-solid fa-circle-check text-emerald-500 animate-bounce";
+                    btn.disabled = false;
+                } else {
+                    icon.className = "fa-solid fa-circle-xmark text-red-500";
+                    btn.disabled = true;
+                }
+            } else {
+                indicator.classList.add('hidden');
+                btn.disabled = true;
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById('adminPass');
+            const icon = document.getElementById('eyeIcon');
+            input.type = input.type === "password" ? "text" : "password";
+            icon.className = input.type === "password" ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+        }
+
+        function handleLogin() {
+            sessionStorage.setItem('isLogged', 'true');
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('mainDashboard').classList.remove('hidden');
+            initData();
+        }
+
+        function handleLogout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        function initData() {
+            const ref = db.ref('data_vendor');
+            ref.on('value', snap => {
+                const data = snap.val();
+                rawData = [];
+                if(data) {
+                    Object.keys(data).forEach(k => {
+                        rawData.push({id: k, ...data[k]});
+                    });
+                    rawData.sort((a, b) => new Date(`${b.tanggal} ${b.jamMasuk}`) - new Date(`${a.tanggal} ${a.jamMasuk}`));
+                }
+                updateStorageInfo(data); 
+                renderUI();
+            });
+        }
+
+        function renderUI() {
+            const tbody = document.getElementById('vendorTableBody');
+            const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || "";
+            tbody.innerHTML = '';
+            
+            let sisaItems = 0; 
+            let doneCount = 0;
+            let totalVendorActive = 0;
+
+            rawData.forEach(item => {
+                const statusStr = (item.status || "").toLowerCase();
+                const isOut = statusStr === 'sudah cekout' || statusStr === 'cekout';
+                
+                if(isOut) doneCount++;
+                if(!isOut) totalVendorActive++;
+                
+                if(item.daftarBarang) {
+                    item.daftarBarang.forEach(b => {
+                        const awal = parseInt(b.jumlahAwal || b.jumlah || 0);
+                        const kembali = parseInt(b.jumlahDikembalikan || 0);
+                        sisaItems += (awal - kembali);
+                    });
+                }
+            });
+            
+            document.getElementById('statTotal').innerText = totalVendorActive;
+            document.getElementById('statItems').innerText = sisaItems;
+            document.getElementById('statDone').innerText = doneCount;
+
+            const filtered = rawData.filter(item => {
+                const statusStr = (item.status || "").toLowerCase();
+                const isOut = statusStr === 'sudah cekout' || statusStr === 'cekout';
+                
+                const namaVendor = (item.namaVendor || "").toLowerCase();
+                const nopol = (item.no_polisi || item.kendaraan || item.nopol || "").toLowerCase();
+                const matchesSearch = namaVendor.includes(searchTerm) || nopol.includes(searchTerm);
+                const matchesTab = (currentTab === 'in') ? !isOut : isOut;
+                
+                return matchesTab && matchesSearch;
+            });
+
+            filtered.forEach(item => {
+                const statusStr = (item.status || "").toUpperCase();
+                let statusBadge = '<span class="badge-in">Di Dalam</span>';
+                
+                if (statusStr === 'SUDAH CEKOUT' || statusStr === 'CEKOUT') {
+                    statusBadge = '<span class="badge-out">Cek-Out</span>';
+                } else if (statusStr === 'SEBAGIAN KEMBALI') {
+                    statusBadge = '<span class="badge-partial">Sebagian</span>';
+                }
+                
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                        <td data-label="Waktu" class="px-8 py-4 font-bold text-slate-700 dark:text-slate-200 text-left">${item.jamMasuk}<br><span class="text-[9px] text-slate-400 uppercase font-black">${item.tanggal}</span></td>
+                        <td data-label="Vendor" class="px-8 py-4 text-left">
+                            <div class="font-black text-yellow-800 dark:text-yellow-400 uppercase truncate max-w-[150px] md:max-w-none">${item.namaVendor || 'UNKNOWN'}</div>
+                            <div class="text-[9px] text-slate-400 font-bold uppercase truncate">${item.pekerjaan || item.pekerjaan_detail || '-'}</div>
+                        </td>
+                        <td data-label="No. Polisi" class="px-8 py-4 md:text-center"><span class="bg-slate-100 dark:bg-slate-700 dark:text-slate-300 border px-2 py-1 rounded-lg font-mono font-bold text-[10px]">${item.no_polisi || item.kendaraan || item.nopol || '-'}</span></td>
+                        <td data-label="Status" class="px-8 py-4 md:text-center">${statusBadge}</td>
+                        <td class="px-8 py-4 action-cell">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="viewDetail('${item.id}')" class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 hover:bg-utYellow hover:text-utDark transition-all"><i class="fa-solid fa-eye text-xs"></i></button>
+                                <button onclick="exportToPDF('${item.id}')" class="w-9 h-9 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fa-solid fa-file-pdf text-xs"></i></button>
+                                <button onclick="deleteData('${item.id}')" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-300 hover:bg-red-500 hover:text-white transition-all"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            </div>
+                        </td>
+                    </tr>`);
+            });
+        }
+
+        function updateStorageInfo(data) {
+            if(!data) return;
+            const sizeKB = (JSON.stringify(data).length) / 1024;
+            const percent = ((sizeKB / 1024) / 1024) * 100;
+            document.getElementById('storageUsed').innerText = sizeKB.toFixed(2) + " KB";
+            document.getElementById('storageBar').style.width = percent.toFixed(4) + "%";
+            document.getElementById('storagePercentText').innerText = percent.toFixed(4) + "%";
+        }
+
+        function viewDetail(id) {
+            const data = rawData.find(x => x.id === id);
+            const statusStr = (data.status || "").toUpperCase();
+            const isOut = statusStr === 'SUDAH CEKOUT' || statusStr === 'CEKOUT';
+            
+            document.getElementById('m_tanggal').innerText = `${data.tanggal} | ${data.jamMasuk}`;
+            
+            let statusBadgeHTML = '<span class="badge-in">Di Dalam Area</span>';
+            if(isOut) {
+                statusBadgeHTML = '<span class="badge-out">Sudah Keluar</span>';
+            } else if(statusStr === 'SEBAGIAN KEMBALI') {
+                statusBadgeHTML = '<span class="badge-partial">Sebagian Kembali</span>';
+            }
+            document.getElementById('m_status_badge').innerHTML = statusBadgeHTML;
+            
+            document.getElementById('m_vendor_row').innerText = data.namaVendor || 'Unknown';
+            document.getElementById('m_pic_row').innerText = data.namaPIC || data.namaPic || data.pic_user || data.pic || '-';
+            document.getElementById('m_nopol_row').innerText = data.no_polisi || data.kendaraan || data.nopol || '-';
+            document.getElementById('m_area_row').innerText = data.area || data.area_pekerjaan || data.areaPekerjaan || '-';
+            document.getElementById('m_pos_row').innerText = data.pos_masuk || data.posMasuk || '-';
+            document.getElementById('m_pos_out_row').innerText = data.pos_keluar || data.posKeluar || (isOut ? 'Sudah Keluar' : 'Masih di Dalam');
+            document.getElementById('m_pekerjaan_row').innerText = data.pekerjaan || data.pekerjaan_detail || '-';
+            document.getElementById('m_nama_v').innerText = data.namaJelasVendor || data.namaPIC || data.namaPic || '-';
+            
+            const detailSecName = isOut ? (data.namaPetugas || "SECURITY OUT") : (data.namaJelasSecurity || data.namaPetugas || "SECURITY");
+            const detailSecTtd = isOut ? (data.tandaTanganPetugas || data.ttdSecurity || "") : (data.ttdSecurity || data.dataSecurity || "");
+            
+            document.getElementById('m_nama_s').innerText = detailSecName;
+            document.getElementById('m_ttd_s').src = detailSecTtd;
+            document.getElementById('m_ttd_v').src = data.ttdVendor || "";
+
+            const tBodyBarang = document.getElementById('m_table_barang'); tBodyBarang.innerHTML = '';
+            let sisaTotalBarang = 0;
+            let adaBarangTerpasangAtauKeluarSebagian = false;
+
+            // FIX PERBAIKAN UTAMA: Penarikan multi-key keterangan keluar buatan Security
+            const textKeteranganCekout = data.catatanCekout || data.keteranganKeluar || data.keterangan_tambahan || data.keteranganTambahan || data.deskripsi || data.keterangan || '';
+
+            if(data.daftarBarang) {
+                data.daftarBarang.forEach((b, idx) => {
+                    const awal = parseInt(b.jumlahAwal || b.jumlah || 0);
+                    const kembali = parseInt(b.jumlahDikembalikan || 0);
+                    const unit = b.satuan ? b.satuan.toUpperCase() : "PCS";
+                    const sisa = awal - kembali;
+                    sisaTotalBarang += sisa;
+                    
+                    if (kembali > 0 && sisa > 0) {
+                        adaBarangTerpasangAtauKeluarSebagian = true;
+                    }
+
+                    const itemTanggal = b.tglMasukItem || b.tanggal || data.tanggal || '-';
+                    const itemJam = b.jamMasukItem || b.waktu || b.jamMasuk || data.jamMasuk || '-';
+                    const textKeteranganCekin = b.keterangan || b.keteranganBarang || b.ket || b.kategori || b.kategoriBarang || '-';
+                    
+                    tBodyBarang.innerHTML += `<tr>
+                        <td class="p-4 text-center border-b border-slate-100 dark:border-slate-700">${idx+1}</td>
+                        <td class="p-4 uppercase border-b border-slate-100 dark:border-slate-700">
+                            <span class="text-yellow-700 dark:text-yellow-400 block font-bold">${b.nama}</span>
+                            <span class="text-[9px] text-gray-400 dark:text-gray-500 font-medium block normal-case mt-0.5"><i class="fa-regular fa-clock mr-1"></i>MASUK: ${itemTanggal} | ${itemJam}</span>
+                        </td>
+                        <td class="p-4 text-center border-b border-slate-100 dark:border-slate-700">${awal} ${unit}</td>
+                        <td class="p-4 text-center text-emerald-600 border-b border-slate-100 dark:border-slate-700">${kembali} ${unit}</td>
+                        <td class="p-4 text-center text-orange-600 border-b border-slate-100 dark:border-slate-700">${sisa} ${unit}</td>
+                        <td class="p-4 border-b border-slate-100 dark:border-slate-700 text-left">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-[8px] font-black uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40 px-1.5 py-0.5 rounded w-fit leading-none tracking-wider">Keterangan Barang Bawaan Vendor</span>
+                                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 pl-0.5">${textKeteranganCekin}</span>
+                                </div>
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-[8px] font-black uppercase bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-200 dark:border-blue-900/40 px-1.5 py-0.5 rounded w-fit leading-none tracking-wider">Keterangan Opsional Keluar</span>
+                                    <span class="text-[11px] font-bold ${textKeteranganCekout ? 'text-slate-700 dark:text-slate-200 italic' : 'text-slate-400'} pl-0.5">${textKeteranganCekout ? textKeteranganCekout : '-'}</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+            }
+
+            const himbauanBox = document.getElementById('m_himbauan_box');
+            const himbauanText = document.getElementById('m_himbauan_text');
+
+            if (isOut && sisaTotalBarang > 0) {
+                himbauanBox.classList.remove('hidden');
+                himbauanText.innerText = "Perhatian: Sebagian material/peralatan telah terpasang di dalam area proyek atau dibawa keluar bertahap. Pastikan sisa item yang tercatat di atas selalu dalam monitoring berkala hingga penutupan kerja penuh.";
+            } else if (!isOut && (statusStr === 'SEBAGIAN KEMBALI' || adaBarangTerpasangAtauKeluarSebagian)) {
+                himbauanBox.classList.remove('hidden');
+                himbauanText.innerText = "Pemberitahuan: Sistem mendeteksi adanya mutasi barang keluar sebagian. Harap verifikasi alokasi fisik material sebelum memberikan otorisasi penyelesaian penuh pada pos keluar.";
+            } else {
+                himbauanBox.classList.add('hidden');
+                himbauanText.innerText = "";
+            }
+
+            const deskripsiBox = document.getElementById('m_deskripsi_checkout_box');
+            const deskripsiText = document.getElementById('m_deskripsi_checkout_text');
+
+            if (textKeteranganCekout.trim() !== "") {
+                deskripsiBox.classList.remove('hidden');
+                deskripsiText.innerText = textKeteranganCekout;
+            } else {
+                deskripsiBox.classList.add('hidden');
+                deskripsiText.innerText = "";
+            }
+
+            const contM = document.getElementById('m_foto_masuk'); contM.innerHTML = '';
+            (data.fotoPeralatan || []).forEach((u, i) => {
+                contM.innerHTML += `<img src="${u}" onclick='openLightbox(${JSON.stringify(data.fotoPeralatan)}, ${i})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+            });
+
+            const fOut = data.fotoKeluar || [];
+            const containerFotoKeluar = document.getElementById('m_foto_keluar_container');
+            containerFotoKeluar.innerHTML = '';
+
+            if (fOut.length > 0) {
+                let innerImgsAwal = '';
+                let innerImgsAkhir = '';
+                let semuaUrl = [];
+
+                fOut.forEach(u => semuaUrl.push(u));
+
+                if (sisaTotalBarang > 0 && statusStr === 'SEBAGIAN KEMBALI') {
+                    fOut.forEach((u, i) => {
+                        innerImgsAwal += `<img src="${u}" onclick='openLightbox(${JSON.stringify(semuaUrl)}, ${i})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+                    });
+                    containerFotoKeluar.innerHTML += `
+                        <div class="mb-2">
+                            <p class="text-[10px] font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950 px-2 py-1 rounded inline-block uppercase mb-1">Gambar Cek-Out Sebagian</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${innerImgsAwal}</div>
+                        </div>`;
+                } else {
+                    if (fOut.length > 1 && statusStr !== 'SEBAGIAN KEMBALI') {
+                        const indexPisah = fOut.length - 1;
+                        
+                        fOut.forEach((u, i) => {
+                            if (i < indexPisah) {
+                                innerImgsAwal += `<img src="${u}" onclick='openLightbox(${JSON.stringify(semuaUrl)}, ${i})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+                            } else {
+                                innerImgsAkhir += `<img src="${u}" onclick='openLightbox(${JSON.stringify(semuaUrl)}, ${i})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+                            }
+                        });
+
+                        if(innerImgsAwal !== '') {
+                            containerFotoKeluar.innerHTML += `
+                                <div class="mb-2">
+                                    <p class="text-[10px] font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950 px-2 py-1 rounded inline-block uppercase mb-1">Gambar Sebelumnya (Sebagian)</p>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${innerImgsAwal}</div>
+                                </div>`;
+                        }
+                        containerFotoKeluar.innerHTML += `
+                            <div class="mb-2">
+                                <p class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-1 rounded inline-block uppercase mb-1">Gambar Setelah Cek-Out Habis / Selesai</p>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${innerImgsAkhir}</div>
+                            </div>`;
+                    } else {
+                        fOut.forEach((u, i) => {
+                            innerImgsAkhir += `<img src="${u}" onclick='openLightbox(${JSON.stringify(semuaUrl)}, ${i})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+                        });
+                        containerFotoKeluar.innerHTML += `
+                            <div class="mb-2">
+                                <p class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-1 rounded inline-block uppercase mb-1">Gambar Cek-Out Keluar</p>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${innerImgsAkhir}</div>
+                            </div>`;
+                    }
+                }
+            } else {
+                containerFotoKeluar.innerHTML = '<p class="text-[9px] text-gray-400 italic text-center p-4 uppercase font-bold">Belum Ada Foto Cek-Out</p>';
+            }
+
+            const fTambahan = data.fotoTambahan || [];
+            const containerFotoTambahan = document.getElementById('m_foto_tambahan_container');
+            const sectionTambahan = document.getElementById('m_section_tambahan');
+            containerFotoTambahan.innerHTML = '';
+
+            if (fTambahan.length > 0) {
+                sectionTambahan.classList.remove('hidden');
+                fTambahan.forEach((url, index) => {
+                    containerFotoTambahan.innerHTML += `<img src="${url}" onclick='openLightbox(${JSON.stringify(fTambahan)}, ${index})' class="w-full h-16 md:h-20 object-cover rounded-xl border shadow-sm img-zoom">`;
+                });
+            } else {
+                sectionTambahan.classList.add('hidden');
+            }
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        async function exportToPDF(id) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const d = rawData.find(x => x.id === id);
+            const pageWidth = doc.internal.pageSize.getWidth();
+            
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+            doc.text("FORM CHECK BARANG BAWAAN VENDOR", pageWidth / 2, 15, { align: "center" });
+            doc.text("PT. UNITED TRACTORS PANDU ENGINEERING", pageWidth / 2, 21, { align: "center" });
+            doc.setFontSize(8); doc.setFont("helvetica", "normal");
+            doc.text("JL. JABABEKA XI BLOK H 30 - 40 KAWASAN INDUSTRI JABABEKA, CIKARANG 17530", pageWidth / 2, 26, { align: "center" });
+            doc.setLineWidth(0.5); doc.line(14, 28, pageWidth - 14, 28);
+
+            const detailData = [
+                ["NAMA VENDOR", `: ${d.namaVendor || '-'}`], ["PIC (USER)", `: ${d.namaPIC || d.namaPic || d.pic_user || '-'}`],
+                ["NO. POLISI", `: ${d.no_polisi || d.kendaraan || d.nopol || '-'}`], ["AREA KERJA", `: ${d.area || d.area_pekerjaan || '-'}`],
+                ["MASUK POS", `: ${d.pos_masuk || d.posMasuk || '-'}`], ["KELUAR POS", `: ${d.pos_keluar || d.posKeluar || (d.jamKeluar || 'MASIH DI DALAM')}`],
+                ["KEGIATAN", `: ${d.pekerjaan || d.pekerjaan_detail || '-'}`]
+            ];
+            doc.autoTable({ startY: 32, body: detailData, theme: 'plain', styles: { fontSize: 9, cellPadding: 1, fontStyle: 'bold' }, columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 'auto' } } });
+            
+            let finalY = doc.lastAutoTable.finalY + 8;
+            doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.text("DAFTAR PERALATAN:", 14, finalY);
+            
+            const textKeteranganCekout = d.catatanCekout || d.keteranganKeluar || d.keterangan_tambahan || d.keteranganTambahan || d.deskripsi || d.keterangan || '';
+
+            const itemRows = (d.daftarBarang || []).map((b, i) => {
+                const bJam = b.jamMasukItem || b.waktu || b.jamMasuk || d.jamMasuk || '-';
+                const bKetIn = b.keterangan || b.keteranganBarang || b.ket || b.kategori || b.kategoriBarang || '-';
+                const formatKeteranganPdf = `[Bawaan Vendor]: ${bKetIn}\n[Opsional Keluar]: ${textKeteranganCekout ? textKeteranganCekout : '-'}`;
+
+                return [
+                    i + 1, 
+                    `${b.nama.toUpperCase()}\n(Masuk: ${bJam})`, 
+                    `${b.jumlahAwal || b.jumlah || 0} ${b.satuan || 'PCS'}`, 
+                    `${b.jumlahDikembalikan || 0} ${b.satuan || 'PCS'}`, 
+                    `${(b.jumlahAwal || b.jumlah || 0) - (b.jumlahDikembalikan || 0)} ${b.satuan || 'PCS'}`, 
+                    formatKeteranganPdf
+                ];
+            });
+
+            doc.autoTable({ startY: finalY + 2, head: [['NO', 'NAMA PERALATAN', 'AWAL', 'KEMBALI', 'SISA', 'KETERANGAN']], body: itemRows, headStyles: { fillColor: [255, 214, 0], textColor: [26, 26, 26], halign: 'center' }, styles: { fontSize: 8 }, columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 1: { cellWidth: 45 }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } } });
+            
+            finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(10); doc.text("DOKUMENTASI FOTO:", 14, finalY);
+            const addImg = (url, x, y, w, h) => { try { doc.addImage(url, 'JPEG', x, y, w, h); } catch (e) {} };
+            let photoY = finalY + 5;
+            doc.setFontSize(8); 
+            doc.text("FOTO CEK-IN:", 14, photoY);
+            let checkInX = 14;
+            (d.fotoPeralatan || []).slice(0, 3).forEach((imgUrl) => { addImg(imgUrl, checkInX, photoY + 2, 40, 30); checkInX += 45; });
+            photoY += 38;
+            doc.text("FOTO CEK-OUT:", 14, photoY);
+            let checkOutX = 14;
+            
+            const flatFotoKeluar = (d.fotoKeluar || []).map(f => typeof f === 'object' ? f.url : f);
+            flatFotoKeluar.slice(0, 3).forEach((imgUrl) => { addImg(imgUrl, checkOutX, photoY + 2, 40, 30); checkOutX += 45; });
+
+            const footerY = photoY + 45; 
+            const col1 = 35; const col2 = pageWidth / 2; const col3 = pageWidth - 35;
+            doc.setFontSize(8); doc.setFont("helvetica", "bold");
+            doc.text("VENDOR / PEMBAWA BARANG", col1, footerY, { align: "center" });
+            if (d.ttdVendor) addImg(d.ttdVendor, col1 - 15, footerY + 2, 30, 18);
+            doc.text(`( ${d.namaJelasVendor || d.namaVendor || '............'} )`, col1, footerY + 28, { align: "center" });
+            doc.text("SECURITY (CEK-IN)", col2, footerY, { align: "center" });
+            const ttdSecIn = d.ttdSecurity || d.dataSecurity || d.tandaTanganPetugas;
+            if (ttdSecIn) addImg(ttdSecIn, col2 - 15, footerY + 2, 30, 18);
+            doc.text(`( ${d.namaJelasSecurity || 'SECURITY IN'} )`, col2, footerY + 28, { align: "center" });
+            doc.text("SECURITY (CEK-OUT)", col3, footerY, { align: "center" });
+            const ttdSecOut = d.tandaTanganPetugas || d.ttdSecurityOut || d.dataSecurityOut;
+            if (ttdSecOut && (d.status === 'SUDAH CEKOUT' || d.status === 'CEKOUT')) { addImg(ttdSecOut, col3 - 15, footerY + 2, 30, 18); }
+            doc.text(`( ${d.namaPetugas || 'SECURITY OUT'} )`, col3, footerY + 28, { align: "center" });
+
+            doc.save(`Laporan_UTPE_${d.namaVendor}_${d.tanggal}.pdf`);
+        }
+
+        function exportByTab() {
+            const filtered = rawData.filter(item => {
+                const statusStr = (item.status || "").toLowerCase();
+                const isOut = statusStr === 'sudah cekout' || statusStr === 'cekout';
+                return (currentTab === 'in') ? !isOut : isOut;
+            });
+
+            if(filtered.length === 0) return alert("Data tidak tersedia untuk status ini.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = doc.internal.pageSize.getWidth();
+            let currentY = 32;
+
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+            doc.text("FORM CHECK BARANG BAWAAN VENDOR (BATCH)", pageWidth / 2, 15, { align: "center" });
+            doc.text("PT. UNITED TRACTORS PANDU ENGINEERING", pageWidth / 2, 21, { align: "center" });
+            doc.setFontSize(8); doc.setFont("helvetica", "normal");
+            doc.text("JL. JABABEKA XI BLOK H 30 - 40 KAWASAN INDUSTRI JABABEKA, CIKARANG 17530", pageWidth / 2, 26, { align: "center" });
+            doc.setLineWidth(0.5); doc.line(14, 28, pageWidth - 14, 28);
+
+            filtered.forEach((d, index) => {
+                if (currentY > 240) {
+                    doc.addPage();
+                    currentY = 20;
+                }
+
+                doc.setFontSize(10); doc.setFont("helvetica", "bold");
+                doc.text(`DATA VENDOR #${index + 1} (${d.tanggal})`, 14, currentY);
+                currentY += 4;
+
+                const detailData = [
+                    ["NAMA VENDOR", `: ${d.namaVendor || '-'}`], 
+                    ["PIC (USER)", `: ${d.namaPIC || d.namaPic || '-'}`],
+                    ["NO. POLISI", `: ${d.no_polisi || d.kendaraan || '-'}`], 
+                    ["KEGIATAN", `: ${d.pekerjaan || '-'}`]
+                ];
+
+                doc.autoTable({
+                    startY: currentY,
+                    body: detailData,
+                    theme: 'plain',
+                    styles: { fontSize: 8, cellPadding: 0.5, fontStyle: 'bold' },
+                    columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 'auto' } },
+                    margin: { left: 14 }
+                });
+
+                currentY = doc.lastAutoTable.finalY + 4;
+
+                const textKeteranganCekoutBatch = d.catatanCekout || d.keteranganKeluar || d.keterangan_tambahan || d.keteranganTambahan || d.deskripsi || d.keterangan || '';
+
+                const itemRows = (d.daftarBarang || []).map((b, i) => {
+                    const bJam = b.jamMasukItem || b.waktu || b.jamMasuk || d.jamMasuk || '-';
+                    const bKetIn = b.keterangan || b.keteranganBarang || b.ket || b.kategori || b.kategoriBarang || '-';
+                    const formatKeteranganPdfBatch = `[Bawaan]: ${bKetIn} | [Keluar]: ${textKeteranganCekoutBatch ? textKeteranganCekoutBatch : '-'}`;
+
+                    return [
+                        i + 1, 
+                        `${b.nama.toUpperCase()} (Masuk: ${bJam})`, 
+                        `${b.jumlahAwal || b.jumlah || 0} ${b.satuan || 'PCS'}`, 
+                        `${b.jumlahDikembalikan || 0} ${b.satuan || 'PCS'}`, 
+                        `${(b.jumlahAwal || b.jumlah || 0) - (b.jumlahDikembalikan || 0)} ${b.satuan || 'PCS'}`, 
+                        formatKeteranganPdfBatch
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: currentY,
+                    head: [['NO', 'NAMA PERALATAN', 'AWAL', 'KEMBALI', 'SISA', 'KETERANGAN']],
+                    body: itemRows,
+                    headStyles: { fillColor: [255, 214, 0], textColor: [26, 26, 26], halign: 'center', fontSize: 7 },
+                    styles: { fontSize: 7 },
+                    columnStyles: { 0: { halign: 'center', cellWidth: 8 }, 1: { cellWidth: 40 }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
+                    margin: { left: 14 }
+                });
+
+                currentY = doc.lastAutoTable.finalY + 12;
+            });
+
+            const fileName = currentTab === 'in' ? "Laporan_Aktif_CekIn.pdf" : "Laporan_Riwayat_CekOut.pdf";
+            doc.save(fileName);
+        }
+
+        function openLightbox(imgs, i) { lbImgs=imgs; lbIdx=i; document.getElementById('lightboxImg').src=lbImgs[lbIdx]; document.getElementById('lightbox').classList.remove('hidden'); updateNav(); }
+        function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
+        function nextImg() { if(lbIdx<lbImgs.length-1){ lbIdx++; document.getElementById('lightboxImg').src=lbImgs[lbIdx]; updateNav(); } }
+        function prevImg() { if(lbIdx>0){ lbIdx--; document.getElementById('lightboxImg').src=lbImgs[lbIdx]; updateNav(); } }
+        function updateNav() { document.getElementById('nextBtn').classList.toggle('hidden', lbIdx===lbImgs.length-1); document.getElementById('prevBtn').classList.toggle('hidden', lbIdx===0); }
+        function switchTab(t) { 
+            currentTab=t; 
+            document.getElementById('tabIn').className=t==='in'?'flex-1 py-5 text-xs font-black tab-active':'flex-1 py-5 text-xs font-black text-slate-400'; 
+            document.getElementById('tabOut').className=t==='out'?'flex-1 py-5 text-xs font-black tab-active':'flex-1 py-5 text-xs font-black text-slate-400'; 
+            renderUI(); 
+        }
+        function closeModal() { document.getElementById('detailModal').classList.add('hidden'); }
+        function deleteData(id) { if(confirm("Hapus permanen?")) db.ref('data_vendor/'+id).remove(); }
+    </script>
+</body>
+</html>
