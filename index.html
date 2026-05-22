@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrasi Barang Bawaan Vendor/Proyek</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#FFCC00', 
+                        primaryDark: '#E6B800', 
+                        secondary: '#1A1A1A', 
+                        neutral: '#86909C', 
+                        light: '#F2F3F5', 
+                        dark: '#121212',
+                        darkBg: '#0F1115', 
+                        darkCard: '#1C1F26' 
+                    },
+                    fontFamily: { inter: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CSS SLIDER DENGAN KOTAK PUTIH */
+        .slider-frame {
+            width: 140px;
+            height: 140px;
+            background: white;
+            border-radius: 2.5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            align-items: center;
+            margin: 0 auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f3f4f6;
+        }
+
+        .dark .slider-frame {
+            background: #ffffff;
+            border: 2px solid #333;
+        }
+
+        .slider-frame::-webkit-scrollbar { display: none; }
+        .slider-track { display: flex; width: auto; }
+
+        .slide-item {
+            width: 140px;
+            height: 140px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scroll-snap-align: center;
+            padding: 15px;
+        }
+
+        .slide-item img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .text-shadow { text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); }
+        .hover-scale { transition: all 0.2s ease; }
+        .hover-scale:hover { transform: scale(1.02); }
+        .btn-touch { transition: all 0.2s ease; }
+        .btn-touch:active { transform: scale(0.96); }
+        .heading-responsive { font-size: clamp(1.3rem, 3.8vw, 2.2rem); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 dark:from-darkBg dark:to-dark dark:text-gray-100 font-inter text-dark min-h-screen flex flex-col transition-colors duration-300">
+
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="toggleDarkMode()" class="bg-white dark:bg-darkCard p-2.5 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 hover-scale btn-touch text-secondary dark:text-primary">
+            <i id="darkIcon" class="fa-solid fa-moon text-lg"></i>
+        </button>
+    </div>
+
+    <main class="flex-1 flex flex-col items-center justify-center p-4 py-6">
+        
+        <div class="mb-4">
+            <div class="slider-frame">
+                <div class="slider-track">
+                    <div class="slide-item">
+                        <img src="logo-utpe1.png" alt="UTPE">
+                    </div>
+                    <div class="slide-item">
+                        <img src="logo-patria.png" alt="PATRIA">
+                    </div>
+                    <div class="slide-item">
+                        <img src="logo-dpp.png" alt="DPP">
+                    </div>
+                </div>
+            </div>
+            <p class="text-[9px] text-neutral text-center mt-1 opacity-60 font-medium">Geser Logo</p>
+        </div>
+
+        <h1 class="heading-responsive font-extrabold text-center text-dark dark:text-white mb-1 text-shadow leading-tight">
+            Registrasi Barang Bawaan <br class="hidden sm:block"> Vendor/Proyek
+        </h1>
+        
+        <p class="text-neutral dark:text-gray-400 text-center text-xs sm:text-sm mb-6 max-w-xs sm:max-w-md font-medium leading-relaxed px-4">
+            Sistem Barang Bawaan Vendor Proyek PT. United Tractors <span class="text-primary font-bold">Pandu Engineering</span>
+        </p>
+
+        <div class="bg-white dark:bg-darkCard rounded-3xl p-5 w-full max-w-md card-shadow border border-gray-100 dark:border-gray-800 mb-6 transition-colors duration-300">
+            <h2 class="text-center text-base sm:text-lg font-bold mb-4 text-dark dark:text-white">
+                Menu Utama
+            </h2>
+
+            <div class="grid grid-cols-2 gap-3">
+                
+                <a href="form-vendor.html" class="block">
+                    <button class="w-full h-full min-h-[110px] bg-primary hover:bg-primaryDark active:bg-primaryDark text-secondary p-3.5 rounded-2xl font-bold flex flex-col justify-between items-start shadow-sm btn-touch hover-scale">
+                        <span class="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center text-secondary mb-2">
+                            <i class="fa-solid fa-plus text-xs"></i>
+                        </span>
+                        <div class="text-left w-full">
+                            <span class="block text-sm leading-tight">Cek In Barang</span>
+                            <span class="text-[9px] font-medium opacity-60 block mt-0.5">Vendor / Proyek</span>
+                        </div>
+                    </button>
+                </a>
+
+                <a href="form-checkout.html" class="block">
+                    <button class="w-full h-full min-h-[110px] bg-secondary hover:bg-black active:bg-black text-white p-3.5 rounded-2xl font-bold flex flex-col justify-between items-start shadow-sm btn-touch hover-scale">
+                        <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white mb-2">
+                            <i class="fa-solid fa-minus text-xs"></i>
+                        </span>
+                        <div class="text-left w-full">
+                            <span class="block text-sm leading-tight">Cek Out Barang</span>
+                            <span class="text-[9px] font-medium text-gray-400 block mt-0.5">Vendor / Proyek</span>
+                        </div>
+                    </button>
+                </a>
+
+                <a href="cekin-subcont.html" class="block">
+                    <button class="w-full h-full min-h-[110px] bg-amber-500 hover:bg-amber-600 active:bg-amber-600 text-white p-3.5 rounded-2xl font-bold flex flex-col justify-between items-start shadow-sm btn-touch hover-scale">
+                        <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white mb-2">
+                            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+                        </span>
+                        <div class="text-left w-full">
+                            <span class="block text-sm leading-tight">Cek In Subcont</span>
+                            <span class="text-[9px] font-medium text-amber-100 block mt-0.5">In-House Entry</span>
+                        </div>
+                    </button>
+                </a>
+
+                <a href="cekout-subcont.html" class="block">
+                    <button class="w-full h-full min-h-[110px] bg-zinc-700 hover:bg-zinc-800 active:bg-zinc-800 text-white p-3.5 rounded-2xl font-bold flex flex-col justify-between items-start shadow-sm btn-touch hover-scale">
+                        <span class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white mb-2">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        </span>
+                        <div class="text-left w-full">
+                            <span class="block text-sm leading-tight">Cek Out Subcont</span>
+                            <span class="text-[9px] font-medium text-zinc-400 block mt-0.5">In-House Exit</span>
+                        </div>
+                    </button>
+                </a>
+
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-darkCard rounded-2xl p-2.5 w-full max-w-md text-center text-[11px] sm:text-xs text-neutral dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-800 transition-colors duration-300">
+            <p class="font-medium">Sistem Berbasis Web v1.0 | Aman & Terintegrasi</p>
+        </div>
+    </main>
+
+    <footer class="py-3 text-center text-neutral dark:text-gray-500 text-[9px] sm:text-xs">
+        <p>&copy; 2026 PT. United Tractors <span class="text-primary dark:text-primary font-semibold">Pandu Engineering</span>. Semua Hak Dilindungi.</p>
+    </footer>
+
+    <script>
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('darkIcon');
+            
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon text-lg';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun text-lg';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        (function initTheme() {
+            const theme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (theme === 'dark' || (!theme && systemPrefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const icon = document.getElementById('darkIcon');
+            if (document.documentElement.classList.contains('dark')) {
+                if(icon) icon.className = 'fa-solid fa-sun text-lg';
+            } else {
+                if(icon) icon.className = 'fa-solid fa-moon text-lg';
+            }
+        });
+    </script>
+</body>
+</html>

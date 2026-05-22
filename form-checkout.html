@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Checkout Vendor - PT UTPE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { 
+                        primary: '#FFD600', 
+                        primaryDark: '#E6C100',
+                        accent: '#F53F3F', 
+                        dark: '#1A1A1A',
+                        darkBg: '#0F1115',
+                        darkCard: '#1C1F26',
+                        darkInput: '#262A33'
+                    },
+                    fontFamily: { inter: ['Inter', 'sans-serif'] },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow { box-shadow: 0 4px 25px rgba(255, 214, 0, 0.1); }
+            .btn-click { @apply transition-all duration-75 active:scale-95 opacity-90; }
+            canvas { touch-action: none; cursor: crosshair; }
+            .swiper-button-next, .swiper-button-prev { color: #FFD600 !important; }
+            .swiper-pagination-bullet { background: #FFD600 !important; }
+            .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            ::-webkit-scrollbar { width: 5px; }
+            ::-webkit-scrollbar-thumb { background: #FFD600; border-radius: 10px; }
+        }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] dark:bg-darkBg font-inter text-dark dark:text-gray-100 min-h-screen transition-colors duration-300">
+
+    <div class="fixed top-5 right-5 z-50">
+        <button onclick="toggleDarkMode()" class="bg-white dark:bg-darkCard p-3 rounded-full shadow-lg border border-yellow-100 dark:border-gray-700 text-yellow-600 dark:text-yellow-400 active:scale-90 transition-all">
+            <i id="darkIcon" class="fa-solid fa-moon text-xl"></i>
+        </button>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6">
+        <div class="bg-white dark:bg-darkCard rounded-[2rem] card-shadow p-6 mb-6 border-t-8 border-primary text-center transition-colors">
+            <div class="flex flex-col items-center justify-center">
+                <img src="icon-proyek.png" alt="Icon Proyek" class="w-20 h-20 object-contain mb-3 drop-shadow-md" onerror="this.src='https://via.placeholder.com/80x80?text=UT'">
+                <h1 class="text-sm font-black text-gray-800 dark:text-white tracking-tight uppercase">FORM CHECK BARANG BAWAAN VENDOR</h1>
+                <h2 class="text-sm font-black text-gray-800 dark:text-gray-300 uppercase">PT. UNITED TRACTORS PANDU ENGINEERING</h2>
+                <p class="text-[9px] text-gray-500 dark:text-gray-400 font-bold mt-1 uppercase">Jl. Jababeka XI Blok H 30 - 40 Kawasan Industri Jababeka, Cikarang 17530</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-darkCard rounded-[2rem] card-shadow p-6 border border-yellow-50 dark:border-gray-800 transition-colors">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 pb-4 border-b border-gray-50 dark:border-gray-700 gap-4">
+                <div>
+                    <h2 class="text-md font-extrabold text-dark dark:text-white flex items-center gap-2 uppercase tracking-tight">
+                        <i class="fa-solid fa-clipboard-check text-primary"></i> Antrian Checkout
+                    </h2>
+                    <span class="bg-primary/20 text-dark dark:text-primary px-4 py-1 rounded-full text-[10px] font-black" id="jumlahData">0 DATA</span>
+                </div>
+                <div class="relative w-full md:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="inputSearch" onkeyup="window.filterData()" placeholder="CARI VENDOR / PIC / NAMA BARANG..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold focus:ring-2 focus:ring-primary outline-none uppercase dark:text-white">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-darkInput text-left border-b border-gray-100 dark:border-gray-700">
+                            <th class="p-4 text-[9px] font-black text-dark dark:text-primary uppercase tracking-widest">Vendor & PIC</th>
+                            <th class="p-4 text-[9px] font-black text-dark dark:text-primary uppercase text-center tracking-widest">Pekerjaan</th>
+                            <th class="p-4 text-[9px] font-black text-dark dark:text-primary uppercase text-center tracking-widest">Waktu Masuk</th>
+                            <th class="p-4 text-[9px] font-black text-dark dark:text-primary uppercase text-center tracking-widest">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelCekout" class="divide-y divide-gray-50 dark:divide-gray-800">
+                        <tr>
+                            <td colspan="4" class="p-10 text-center text-[10px] uppercase font-bold italic text-gray-400 tracking-widest">Memuat Data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditData" class="hidden fixed inset-0 bg-dark/90 backdrop-blur-md z-[70] flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-2xl max-w-xl w-full max-h-[92vh] overflow-y-auto border-t-8 border-blue-500">
+            <div class="p-6 text-center border-b border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-darkInput/50">
+                <p class="text-[9px] font-black text-blue-500 tracking-widest uppercase mb-1">Edit / Tambah Barang Bawaan</p>
+                <h3 class="font-black text-gray-800 dark:text-white text-sm uppercase" id="editNamaVendorTitle">VENDOR NAME</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase mb-1">Tanggal Masuk (Tambahan)</label>
+                        <input type="date" id="editTglMasuk" class="w-full bg-slate-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 p-3 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-black text-gray-400 uppercase mb-1">Jam Masuk (Tambahan)</label>
+                        <input type="time" id="editJamMasuk" class="w-full bg-slate-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 p-3 rounded-xl font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500 dark:text-white">
+                    </div>
+                </div>
+
+                <div id="editBarangContainer" class="space-y-4 mb-6"></div>
+                <button onclick="window.tambahBarisEdit()" class="w-full mb-6 border-2 border-dashed border-blue-500/30 py-3 rounded-2xl text-blue-500 font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all">
+                    <i class="fa-solid fa-plus-circle"></i> Tambah Barang Baru
+                </button>
+
+                <div class="mb-6">
+                    <h4 class="text-[9px] font-black text-blue-600 mb-2 uppercase tracking-widest text-center">Foto Barang Tambahan (Opsional)</h4>
+                    <div id="containerPreviewEdit" class="grid grid-cols-3 gap-2 mb-2"></div>
+                    <input type="file" id="uploadFotoEdit" accept="image/*" multiple class="hidden">
+                    <button type="button" onclick="document.getElementById('uploadFotoEdit').click()" class="w-full bg-blue-50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400 border-2 border-dashed border-blue-500/30 p-3 rounded-2xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 hover:bg-blue-100 transition-all">
+                        <i class="fa-solid fa-camera text-lg"></i>
+                        <span>Pilih/Ambil Foto Tambahan</span>
+                    </button>
+                </div>
+
+                <div class="flex gap-4">
+                    <button onclick="window.tutupModalEdit()" class="btn-click flex-1 bg-gray-100 dark:bg-darkInput dark:text-white py-4 px-4 rounded-2xl font-black text-[10px] uppercase">Batal</button>
+                    <button id="btnUpdateData" onclick="window.simpanUpdateData()" class="btn-click flex-[2] bg-blue-500 text-white py-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-blue-500/30">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalFormCekout" class="hidden fixed inset-0 bg-dark/90 backdrop-blur-md z-[60] flex items-center justify-center p-2 sm:p-4">
+        <div id="modalCekoutScrollBody" class="bg-white dark:bg-darkCard rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto border-t-8 border-primary relative">
+            
+            <button onclick="window.tutupModalCekout()" class="absolute top-4 right-5 text-gray-400 hover:text-accent dark:hover:text-accent transition-colors duration-150 p-2 z-[65] btn-click" title="Tutup">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div id="targetScrollAtasCekout" class="p-6 text-center border-b border-gray-100 dark:border-gray-700 bg-slate-50/30 dark:bg-darkInput/50 pr-12">
+                <p class="text-[9px] font-black text-yellow-600 tracking-widest uppercase mb-1">Pemeriksaan Barang Keluar</p>
+                <h3 class="font-black text-gray-800 dark:text-white text-sm uppercase">PT. UNITED TRACTORS PANDU ENGINEERING</h3>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-primary/5 dark:bg-primary/10 p-5 rounded-[1.5rem] border border-primary/20 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-[9px] text-yellow-700 dark:text-primary font-black uppercase opacity-80">Vendor</p>
+                            <p class="font-black text-dark dark:text-white text-xs uppercase" id="detailNamaVendor">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-yellow-700 dark:text-primary font-black uppercase opacity-80">Nama PIC</p>
+                            <p class="font-black text-dark dark:text-white text-xs uppercase" id="detailNamaPIC">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-yellow-700 dark:text-primary font-black uppercase opacity-80">No. Polisi</p>
+                            <p class="font-black text-dark dark:text-white text-xs uppercase" id="detailNoPolisi">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] text-yellow-700 dark:text-primary font-black uppercase opacity-80">Pos / Area</p>
+                            <p class="font-bold text-dark dark:text-gray-300 text-[10px] uppercase leading-tight" id="detailPosMasuk">-</p>
+                        </div>
+                        <div class="col-span-1 md:col-span-2">
+                            <p class="text-[9px] text-yellow-700 dark:text-primary font-black uppercase opacity-80">Jenis Pekerjaan</p>
+                            <p class="font-bold text-dark dark:text-gray-300 text-[10px] uppercase leading-tight" id="detailPekerjaan">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-[9px] font-black text-dark dark:text-gray-400 mb-2 uppercase tracking-widest">Foto Cek-In (Referensi)</h4>
+                            <div id="previewFotoContainer" class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-darkInput p-2 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 min-h-[80px] items-center justify-center"></div>
+                        </div>
+                        <div id="sectionFotoTambahan" class="hidden">
+                            <h4 class="text-[9px] font-black text-blue-600 mb-2 uppercase tracking-widest flex justify-between">
+                                <span>Foto Barang Tambahan</span>
+                                <span id="waktuBarangTambahan" class="text-blue-500 font-bold"></span>
+                            </h4>
+                            <div id="previewFotoTambahan" class="grid grid-cols-2 gap-2 bg-blue-50/50 dark:bg-blue-900/10 p-2 rounded-2xl border border-dashed border-blue-200 min-h-[40px]"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-[9px] font-black text-yellow-600 mb-2 uppercase tracking-widest">Foto Keluar Sesi Ini (Maks 5)</h4>
+                        <div id="containerPreviewKeluar" class="grid grid-cols-3 gap-2 mb-2"></div>
+                        <input type="file" id="uploadFotoKeluar" accept="image/*" multiple class="hidden">
+                        <button type="button" onclick="window.pemicuKamera()" id="btnKamera" class="w-full bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-primary border-2 border-dashed border-primary/30 p-3 rounded-2xl font-black text-[10px] uppercase flex flex-col items-center justify-center gap-1 hover:bg-yellow-100 transition-all">
+                            <i class="fa-solid fa-camera text-lg"></i>
+                            <span>Pilih/Ambil Foto Keluar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-2 mb-6">
+                    <h4 class="flex items-center gap-2 font-black text-[10px] text-dark dark:text-white mb-4 uppercase tracking-widest">
+                        <i class="fa-solid fa-layer-group text-primary"></i> Verifikasi Barang Keluar
+                    </h4>
+                    <div id="formBarangContainer" class="space-y-3"></div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-[9px] font-black text-dark dark:text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-nib text-primary"></i> Keterangan Tambahan (Opsional)
+                    </label>
+                    <textarea id="catatanCekout" rows="2" class="w-full bg-slate-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 p-4 rounded-2xl font-bold text-[10px] uppercase focus:ring-2 focus:ring-primary outline-none dark:text-white placeholder:text-gray-400" placeholder="CONTOH: 2 PCS KABEL TERPASANG DI PANEL, SISANYA DIBAWA KELUAR..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="space-y-3">
+                        <label class="block text-[9px] font-black text-dark dark:text-gray-400 uppercase tracking-widest">Tanda Tangan Security</label>
+                        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden relative shadow-inner">
+                            <canvas id="ttdPetugas" class="w-full h-32 bg-white"></canvas>
+                            <button onclick="window.resetSignature()" class="btn-click absolute bottom-2 right-2 bg-accent text-white text-[8px] font-black px-3 py-1 rounded-full uppercase">Reset</button>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="block text-[9px] font-black text-dark dark:text-gray-400 uppercase tracking-widest">Nama Petugas Jaga</label>
+                        <input type="text" id="namaPetugas" class="w-full bg-slate-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 p-4 rounded-2xl font-black uppercase text-xs focus:ring-2 focus:ring-primary outline-none dark:text-white" placeholder="INPUT NAMA SECURITY">
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="window.tutupModalCekout()" class="btn-click bg-gray-100 dark:bg-darkInput dark:text-white py-4 px-4 rounded-2xl font-black text-[10px] uppercase sm:flex-1">Batal</button>
+                    <button id="btnSimpan" onclick="window.simpanCekout(false)" class="btn-click bg-primary text-black py-4 px-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-primary/30 sm:flex-[2]">Simpan Berkala</button>
+                    <button id="btnSelesaiTotal" onclick="window.simpanCekout(true)" class="btn-click bg-emerald-600 text-white py-4 px-4 rounded-2xl font-black text-[10px] uppercase shadow-lg shadow-emerald-600/30 sm:flex-[2]">Selesai & Tutup Antrian</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="hidden fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
+        <button onclick="window.tutupLightbox()" class="btn-click absolute top-6 right-6 text-white text-3xl z-[110]">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+        <div class="swiper mySwiper w-full h-[80vh]">
+            <div class="swiper-wrapper" id="lightbox-content"></div>
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // --- Dark Mode System ---
+        window.toggleDarkMode = function() {
+            const html = document.documentElement;
+            const icon = document.getElementById('darkIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2ATbpqBuid0zhC3eZgAvcgRs1IFhGXa4",
+            authDomain: "sistemkeamanan-2e605.firebaseapp.com",
+            databaseURL: "https://sistemkeamanan-2e605-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sistemkeamanan-2e605",
+            storageBucket: "sistemkeamanan-2e605.firebasestorage.app",
+            messagingSenderId: "1078653939267",
+            appId: "1:1078653939267:web:88a7044bfc625967d62ef6",
+            measurementId: "G-FXVEB02HQW"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // PIN SUDAH DIUBAH MENJADI 1426
+        const PIN_SECURITY = "1426"; 
+
+        let signaturePadInst, dataTerpilih = null, dataSemua = [], mySwiper = null;
+        let listFotoKeluarURL = []; 
+        let listFotoEditURL = [];   
+
+        function muatDataCekout() {
+            const dbRef = ref(db, 'data_vendor');
+            onValue(dbRef, (snapshot) => {
+                dataSemua = [];
+                const tbody = document.getElementById('tabelCekout');
+                if (snapshot.exists()) {
+                    snapshot.forEach((child) => {
+                        const val = child.val();
+                        if (val.status === 'BELUM CEKOUT' || val.status === 'SEBAGIAN KEMBALI') {
+                            dataSemua.push({ id: child.key, ...val });
+                        }
+                    });
+                    renderTabel(dataSemua);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-[10px] uppercase font-bold italic text-gray-400">Tidak Ada Antrian</td></tr>';
+                    document.getElementById('jumlahData').textContent = `0 DATA`;
+                }
+            });
+        }
+
+        function renderTabel(data) {
+            const tbody = document.getElementById('tabelCekout');
+            document.getElementById('jumlahData').textContent = `${data.length} DATA`;
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-[10px] uppercase font-bold italic text-gray-400">Data Tidak Ditemukan</td></tr>';
+                return;
+            }
+            
+            data.sort((a, b) => new Date(b.waktuInput || 0) - new Date(a.waktuInput || 0)).forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-yellow-50/30 dark:hover:bg-darkInput/50 transition-all border-b border-gray-50 dark:border-gray-800';
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <div class="font-black text-dark dark:text-white text-[11px] uppercase">${item.namaVendor || 'VENDOR'}</div>
+                        <div class="text-[9px] text-yellow-600 dark:text-yellow-400 font-bold uppercase mt-1">PIC: ${item.namaPIC || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="text-[10px] font-black text-dark dark:text-gray-300 uppercase">${item.pekerjaan || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="text-[10px] font-black text-dark dark:text-gray-300">${item.jamMasuk || '-'}</div>
+                        <div class="text-[8px] font-bold text-gray-400 uppercase">${item.tanggal || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                             <button onclick="window.bukaModalEdit('${item.id}')" class="btn-click bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 font-black text-[9px] p-2 rounded-xl" title="Edit Barang">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                             </button>
+                            <button onclick="window.bukaFormCekout('${item.id}')" class="btn-click bg-primary text-black border-2 border-primary font-black text-[9px] px-5 py-2 rounded-xl hover:bg-primaryDark">PROSES</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.bukaModalEdit = function(id) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const bgModal = isDark ? '#1c1f26' : '#ffffff';
+            const textColor = isDark ? '#ffffff' : '#1a1a1a';
+
+            Swal.fire({
+                title: '🔒 VERIFIKASI SECURITY',
+                html: `
+                    <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-5">Otoritas khusus petugas jaga PT UTPE</p>
+                    <div class="flex justify-center gap-3 mb-6">
+                        <input type="password" id="digit-1" maxlength="1" class="pin-box w-12 h-14 text-center font-black text-xl bg-slate-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 rounded-xl outline-none transition-all focus:scale-105" readonly>
+                        <input type="password" id="digit-2" maxlength="1" class="pin-box w-12 h-14 text-center font-black text-xl bg-slate-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 rounded-xl outline-none transition-all focus:scale-105" readonly>
+                        <input type="password" id="digit-3" maxlength="1" class="pin-box w-12 h-14 text-center font-black text-xl bg-slate-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 rounded-xl outline-none transition-all focus:scale-105" readonly>
+                        <input type="password" id="digit-4" maxlength="1" class="pin-box w-12 h-14 text-center font-black text-xl bg-slate-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 rounded-xl outline-none transition-all focus:scale-105" readonly>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 max-w-[240px] mx-auto mb-2">
+                        ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => `
+                            <button onclick="window.pressPinNumber('${num}')" class="w-full h-12 bg-slate-50 dark:bg-zinc-800 active:bg-blue-500 dark:active:bg-blue-600 active:text-white font-black text-sm rounded-xl transition-all border border-gray-100 dark:border-zinc-700 shadow-sm flex items-center justify-center">${num}</button>
+                        `).join('')}
+                        <button onclick="window.clearPinAll()" class="w-full h-12 bg-red-50 text-red-500 dark:bg-red-950/30 dark:text-red-400 font-bold text-[10px] uppercase rounded-xl border border-red-100 dark:border-red-900 shadow-sm flex items-center justify-center">Reset</button>
+                        <button onclick="window.pressPinNumber('0')" class="w-full h-12 bg-slate-50 dark:bg-zinc-800 active:bg-blue-500 dark:active:bg-blue-600 active:text-white font-black text-sm rounded-xl transition-all border border-gray-100 dark:border-zinc-700 shadow-sm flex items-center justify-center">0</button>
+                        <button onclick="window.deletePinLast()" class="w-full h-12 bg-orange-50 text-orange-500 dark:bg-orange-950/30 dark:text-orange-400 font-bold text-[10px] uppercase rounded-xl border border-orange-100 dark:border-orange-900 shadow-sm flex items-center justify-center"><i class="fa-solid fa-delete-left text-sm"></i></button>
+                    </div>
+                    <input type="hidden" id="hiddenPinValue" value="">
+                `,
+                background: bgModal,
+                color: textColor,
+                showCancelButton: true,
+                confirmButtonText: 'VERIFIKASI',
+                cancelButtonText: 'BATAL',
+                confirmButtonColor: '#3b82f6',
+                customClass: {
+                    popup: 'rounded-[2rem] p-6',
+                    confirmButton: 'rounded-xl font-black text-xs px-6 py-3 uppercase tracking-wider',
+                    cancelButton: 'rounded-xl font-black text-xs px-6 py-3 uppercase tracking-wider bg-gray-100 dark:bg-zinc-700 text-gray-500 dark:text-gray-300'
+                },
+                preConfirm: () => {
+                    const pinMasuk = document.getElementById('hiddenPinValue').value;
+                    if (pinMasuk.length < 4) {
+                        Swal.showValidationMessage('PIN harus berisikan 4 digit angka!');
+                        return false;
+                    }
+                    if (pinMasuk !== PIN_SECURITY) {
+                        Swal.showValidationMessage('PIN Security salah! Akses ditolak.');
+                        window.clearPinAll();
+                        return false;
+                    }
+                    return true;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    dataTerpilih = dataSemua.find(x => x.id === id);
+                    if (!dataTerpilih) return;
+                    
+                    document.getElementById('editNamaVendorTitle').textContent = dataTerpilih.namaVendor || 'VENDOR';
+                    const now = new Date();
+                    document.getElementById('editTglMasuk').value = now.toISOString().split('T')[0];
+                    document.getElementById('editJamMasuk').value = now.toTimeString().slice(0,5);
+
+                    const container = document.getElementById('editBarangContainer');
+                    container.innerHTML = '';
+                    
+                    if(dataTerpilih.daftarBarang && Array.isArray(dataTerpilih.daftarBarang)) {
+                        dataTerpilih.daftarBarang.forEach(brg => {
+                            window.tambahBarisEdit(brg.nama, brg.jumlahAwal ?? brg.jumlah, brg.satuan, brg.tglMasukItem, brg.jamMasukItem, brg.keteranganBarang ?? brg.keterangan, brg.jumlahDikembalikan ?? 0);
+                        });
+                    }
+                    
+                    listFotoEditURL = Array.isArray(dataTerpilih.fotoTambahan) ? [...dataTerpilih.fotoTambahan] : [];
+                    renderPreviewEdit();
+                    document.getElementById('modalEditData').classList.remove('hidden');
+                }
+            });
+        }
+
+        window.pressPinNumber = function(num) {
+            const hiddenInput = document.getElementById('hiddenPinValue');
+            let currentVal = hiddenInput.value;
+            if(currentVal.length >= 4) return;
+            
+            currentVal += num;
+            hiddenInput.value = currentVal;
+            
+            document.getElementById(`digit-${currentVal.length}`).value = num;
+            document.getElementById(`digit-${currentVal.length}`).classList.add('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/20');
+        }
+
+        window.deletePinLast = function() {
+            const hiddenInput = document.getElementById('hiddenPinValue');
+            let currentVal = hiddenInput.value;
+            if(currentVal.length === 0) return;
+            
+            document.getElementById(`digit-${currentVal.length}`).value = '';
+            document.getElementById(`digit-${currentVal.length}`).classList.remove('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/20');
+            
+            currentVal = currentVal.slice(0, -1);
+            hiddenInput.value = currentVal;
+        }
+
+        window.clearPinAll = function() {
+            const hiddenInput = document.getElementById('hiddenPinValue');
+            if (hiddenInput) hiddenInput.value = '';
+            for(let i=1; i<=4; i++) {
+                const el = document.getElementById(`digit-${i}`);
+                if(el) {
+                    el.value = '';
+                    el.classList.remove('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/20');
+                }
+            }
+        }
+
+        window.cekSatuanCustom = function(selectEl) {
+            const customInput = selectEl.parentElement.querySelector('.edit-satuan-custom');
+            if (selectEl.value === 'LAINNYA') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+                customInput.required = true;
+            } else {
+                customInput.classList.add('hidden');
+                customInput.value = '';
+                customInput.required = false;
+            }
+        }
+
+        window.tambahBarisEdit = function(nama = '', jumlah = '', satuan = 'PCS', tglAsli = '', jamAsli = '', keterangan = '', dikembalikan = 0) {
+            const container = document.getElementById('editBarangContainer');
+            const div = document.createElement('div');
+            div.className = "flex flex-col gap-2 bg-slate-50 dark:bg-darkInput p-3 rounded-2xl animate-slide-in row-edit-barang";
+            div.setAttribute('data-tgl-asli', tglAsli || '');
+            div.setAttribute('data-jam-asli', jamAsli || '');
+            div.setAttribute('data-dikembalikan', dikembalikan);
+            
+            const isDefaultSatuan = ['PCS', 'SET', 'ROLL'].includes(satuan.toUpperCase());
+            const selectValue = isDefaultSatuan ? satuan.toUpperCase() : 'LAINNYA';
+            const customTextValue = isDefaultSatuan ? '' : satuan.toUpperCase();
+            const hiddenClass = isDefaultSatuan ? 'hidden' : '';
+
+            div.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <input type="text" placeholder="Nama Barang" class="edit-nama flex-[2] bg-transparent border-b border-gray-300 dark:border-gray-600 text-[10px] font-black uppercase outline-none focus:border-blue-500 py-1 dark:text-white" value="${nama}">
+                    <input type="number" placeholder="Qty" class="edit-qty w-14 bg-transparent border-b border-gray-300 dark:border-gray-600 text-[10px] font-black text-center outline-none focus:border-blue-500 py-1 dark:text-white" value="${jumlah}">
+                    <div class="flex-[1.5] flex items-center gap-1 border-b border-gray-300 dark:border-gray-600 py-1">
+                        <select onchange="window.cekSatuanCustom(this)" class="edit-satuan bg-transparent text-[10px] font-black outline-none dark:bg-darkCard dark:text-white w-full">
+                            <option value="PCS" ${selectValue === 'PCS' ? 'selected' : ''}>PCS</option>
+                            <option value="SET" ${selectValue === 'SET' ? 'selected' : ''}>SET</option>
+                            <option value="ROLL" ${selectValue === 'ROLL' ? 'selected' : ''}>ROLL</option>
+                            <option value="LAINNYA" ${selectValue === 'LAINNYA' ? 'selected' : ''}>LAINNYA...</option>
+                        </select>
+                        <input type="text" placeholder="Ketik..." value="${customTextValue}" class="edit-satuan-custom ${hiddenClass} w-14 bg-blue-50 dark:bg-darkBg text-blue-600 dark:text-primary border border-blue-300 dark:border-gray-700 rounded text-center text-[9px] font-black uppercase outline-none px-1">
+                    </div>
+                </div>
+                <div>
+                    <input type="text" placeholder="Keterangan Barang" class="edit-keterangan w-full bg-transparent border-b border-gray-200 dark:border-gray-700 text-[9px] font-bold uppercase outline-none focus:border-blue-500 py-0.5 dark:text-white" value="${keterangan}">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        document.getElementById('uploadFotoEdit').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if(files.length === 0) return;
+            
+            Swal.fire({
+                title: 'Memproses Gambar...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            for(let file of files) {
+                const compressedBase64 = await compressImage(file);
+                if (compressedBase64) {
+                    listFotoEditURL.push(compressedBase64);
+                }
+            }
+            renderPreviewEdit();
+            Swal.close();
+        });
+
+        function renderPreviewEdit() {
+            const container = document.getElementById('containerPreviewEdit');
+            container.innerHTML = listFotoEditURL.map((src, i) => `
+                <div class="relative w-full h-16 animate-slide-in">
+                    <img src="${src}" class="w-full h-full object-cover rounded-xl border border-blue-200" onerror="this.src='https://via.placeholder.com/100x100?text=INVALID'">
+                    <button onclick="window.hapusFotoEdit(${i})" class="absolute -top-1 -right-1 bg-red-500 text-white w-4 h-4 rounded-full text-[8px]">×</button>
+                </div>
+            `).join('');
+        }
+
+        window.hapusFotoEdit = function(i) {
+            listFotoEditURL.splice(i, 1);
+            renderPreviewEdit();
+        }
+
+        window.simpanUpdateData = async function() {
+            const rows = document.querySelectorAll('.row-edit-barang');
+            const tglEdit = document.getElementById('editTglMasuk').value;
+            const jamEdit = document.getElementById('editJamMasuk').value;
+
+            let updatedList = [];
+            let validasiCustomOk = true;
+
+            rows.forEach(row => {
+                const nama = row.querySelector('.edit-nama').value.trim();
+                const qty = parseInt(row.querySelector('.edit-qty').value) || 0;
+                const selectSatuan = row.querySelector('.edit-satuan').value;
+                const customSatuanInput = row.querySelector('.edit-satuan-custom');
+                const ket = row.querySelector('.edit-keterangan').value.trim();
+                
+                const tglAsli = row.getAttribute('data-tgl-asli');
+                const jamAsli = row.getAttribute('data-jam-asli');
+                const dikembalikan = parseInt(row.getAttribute('data-dikembalikan')) || 0;
+
+                let satuanFinal = selectSatuan;
+                if (selectSatuan === 'LAINNYA') {
+                    satuanFinal = customSatuanInput.value.trim().toUpperCase();
+                    if (!satuanFinal) validasiCustomOk = false;
+                }
+
+                if (nama && qty > 0) {
+                    const tglFinal = (tglAsli && tglAsli !== '') ? tglAsli : tglEdit;
+                    const jamFinal = (jamAsli && jamAsli !== '') ? jamAsli : jamEdit;
+
+                    updatedList.push({ 
+                        nama: nama.toUpperCase(), 
+                        jumlah: qty, 
+                        jumlahAwal: qty, 
+                        jumlahDikembalikan: dikembalikan, 
+                        satuan: satuanFinal,
+                        tglMasukItem: tglFinal,
+                        jamMasukItem: jamFinal,
+                        keteranganBarang: ket.toUpperCase() || "-",
+                        keterangan: ket.toUpperCase() || "-"
+                    });
+                }
+            });
+            
+            if (!validasiCustomOk) return Swal.fire('Error', 'Satuan manual kosong!', 'warning');
+            if (updatedList.length === 0) return Swal.fire('Error', 'Barang tidak boleh kosong!', 'warning');
+            
+            try {
+                const itemRef = ref(db, `data_vendor/${dataTerpilih.id}`);
+                await update(itemRef, { 
+                    daftarBarang: updatedList, 
+                    fotoTambahan: listFotoEditURL, 
+                    tglMasukTambahan: tglEdit, 
+                    jamMasukTambahan: jamEdit
+                });
+                Swal.fire('Berhasil', 'Data diperbarui!', 'success');
+                window.tutupModalEdit();
+            } catch (err) { Swal.fire('Gagal', err.message, 'error'); }
+        }
+
+        window.tutupModalEdit = function() { document.getElementById('modalEditData').classList.add('hidden'); }
+
+        window.bukaFormCekout = function(id) {
+            dataTerpilih = dataSemua.find(x => x.id === id);
+            if (!dataTerpilih) return;
+
+            const modalBody = document.getElementById('modalCekoutScrollBody');
+            if (modalBody) modalBody.scrollTop = 0;
+
+            document.getElementById('detailNamaVendor').textContent = dataTerpilih.namaVendor || '-';
+            document.getElementById('detailNamaPIC').textContent = dataTerpilih.namaPIC || '-';
+            document.getElementById('detailNoPolisi').textContent = dataTerpilih.kendaraan || dataTerpilih.noPolisi || '-';
+            document.getElementById('detailPosMasuk').textContent = `${dataTerpilih.posMasuk || '-'} / ${dataTerpilih.area || '-'}`; 
+            document.getElementById('detailPekerjaan').textContent = dataTerpilih.pekerjaan || '-';
+
+            document.getElementById('namaPetugas').value = '';
+
+            const fotoContainer = document.getElementById('previewFotoContainer');
+            fotoContainer.innerHTML = '';
+            
+            let fotoPeralatanList = [];
+            let targetFotoField = dataTerpilih.fotoPeralatan || dataTerpilih.fotoCekin;
+
+            if (targetFotoField) {
+                if (Array.isArray(targetFotoField)) {
+                    fotoPeralatanList = targetFotoField.filter(src => src && typeof src === 'string' && src !== "LINK INVALID");
+                } else if (typeof targetFotoField === 'object') {
+                    fotoPeralatanList = Object.values(targetFotoField).filter(src => src && typeof src === 'string' && src !== "LINK INVALID");
+                } else if (typeof targetFotoField === 'string' && targetFotoField !== "LINK INVALID") {
+                    fotoPeralatanList = [targetFotoField];
+                }
+            }
+
+            if (fotoPeralatanList.length > 0) {
+                fotoPeralatanList.forEach((src, idx) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "relative w-full h-14 bg-gray-100 dark:bg-darkInput rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden flex items-center justify-center cursor-pointer shadow-sm animate-slide-in hover:scale-105 transition-transform";
+                    
+                    const img = document.createElement('img');
+                    img.src = src; 
+                    img.className = "w-full h-full object-cover";
+                    img.onclick = () => window.bukaLightbox(fotoPeralatanList, idx);
+                    
+                    img.onerror = function() { 
+                        wrapper.innerHTML = `<div class="text-gray-400 dark:text-gray-500 text-center flex flex-col items-center justify-center p-1"><i class="fa-solid fa-image-broken text-md"></i><span class="text-[7px] font-bold mt-0.5">LINK INVALID</span></div>`;
+                    };
+                    
+                    wrapper.appendChild(img);
+                    fotoContainer.appendChild(wrapper);
+                });
+            } else {
+                fotoContainer.innerHTML = '<span class="text-[9px] text-gray-400 font-bold col-span-2 text-center py-4">⚠️ TIDAK ADA FOTO DOKUMENTASI</span>';
+            }
+
+            const sectionEdit = document.getElementById('sectionFotoTambahan');
+            const previewEdit = document.getElementById('previewFotoTambahan');
+            const waktuLabel = document.getElementById('waktuBarangTambahan');
+            let fotoTambahan = [];
+
+            if (dataTerpilih.fotoTambahan) {
+                if (Array.isArray(dataTerpilih.fotoTambahan)) {
+                    fotoTambahan = dataTerpilih.fotoTambahan.filter(src => src && typeof src === 'string' && src !== "LINK INVALID");
+                } else if (typeof dataTerpilih.fotoTambahan === 'object') {
+                    fotoTambahan = Object.values(dataTerpilih.fotoTambahan).filter(src => src && typeof src === 'string' && src !== "LINK INVALID");
+                }
+            }
+            
+            if (fotoTambahan.length > 0) {
+                sectionEdit.classList.remove('hidden');
+                waktuLabel.textContent = `${dataTerpilih.tglMasukTambahan || '-'} | ${dataTerpilih.jamMasukTambahan || '-'}`;
+                previewEdit.innerHTML = '';
+                
+                fotoTambahan.forEach((src, idx) => {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = "relative w-full h-14 bg-gray-100 dark:bg-darkInput rounded-xl border border-blue-300 overflow-hidden flex items-center justify-center cursor-pointer hover:scale-105 transition-transform";
+                    
+                    const img = document.createElement('img');
+                    img.src = src; 
+                    img.className = "w-full h-full object-cover";
+                    img.onclick = () => window.bukaLightbox(fotoTambahan, idx);
+                    
+                    img.onerror = function() {
+                        wrapper.innerHTML = `<div class="text-blue-400 text-center flex flex-col items-center justify-center p-1"><i class="fa-solid fa-image-broken text-md"></i><span class="text-[7px] font-bold mt-0.5">BROKEN</span></div>`;
+                    };
+                    
+                    wrapper.appendChild(img);
+                    previewEdit.appendChild(wrapper);
+                });
+            } else { 
+                sectionEdit.classList.add('hidden'); 
+            }
+
+            listFotoKeluarURL = [];
+            renderPreviewKeluar();
+            document.getElementById('catatanCekout').value = ''; 
+
+            const container = document.getElementById('formBarangContainer');
+            container.innerHTML = '';
+            
+            const daftarBarang = Array.isArray(dataTerpilih.daftarBarang) ? dataTerpilih.daftarBarang : [];
+            daftarBarang.forEach((brg, i) => {
+                const awal = parseInt(brg.jumlahAwal ?? brg.jumlah ?? 0);
+                const dikembalikan = parseInt(brg.jumlahDikembalikan ?? 0);
+                const sisa = awal - dikembalikan;
+                
+                const tglItem = brg.tglMasukItem || dataTerpilih.tanggal || '-';
+                const jamItem = brg.jamMasukItem || dataTerpilih.jamMasuk || '-';
+                const ketItem = brg.keteranganBarang || brg.keterangan || '';
+
+                const div = document.createElement('div');
+                div.className = 'bg-white dark:bg-darkInput border border-gray-100 dark:border-gray-700 p-4 rounded-2xl flex items-center justify-between animate-slide-in';
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-primary text-black text-[11px] font-black rounded-xl flex items-center justify-center">${i + 1}</div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-black text-dark dark:text-white uppercase">${brg.nama || 'BARANG'}</span>
+                            <span class="text-[9px] text-orange-600 font-black">SISA DI DALAM: ${sisa} ${brg.satuan || 'PCS'}</span>
+                            ${ketItem ? `<span class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase mt-0.5">${ketItem}</span>` : ''}
+                            <span class="text-[7px] text-gray-400 font-bold mt-0.5">Masuk: ${tglItem} | ${jamItem}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-[8px] font-black text-gray-400">QTY KELUAR</span>
+                        <input type="number" id="input-${i}" min="0" max="${sisa}" value="${sisa}" oninput="if(this.value < 0) this.value = 0; if(this.value > ${sisa}) this.value = ${sisa};" class="w-12 bg-slate-50 dark:bg-darkBg text-center font-black text-primary text-xs p-1 rounded-lg outline-none">
+                    </div>`;
+                container.appendChild(div);
+            });
+
+            document.getElementById('modalFormCekout').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            setTimeout(() => {
+                const canvas = document.getElementById('ttdPetugas');
+                signaturePadInst = new SignaturePad(canvas);
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio; 
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                
+                signaturePadInst.clear();
+            }, 150);
+        }
+
+        window.resetSignature = function() {
+            if (signaturePadInst) signaturePadInst.clear();
+        }
+
+        window.simpanCekout = async function(forceSelesai = false) {
+            const petugas = document.getElementById('namaPetugas').value.trim();
+            let catatan = document.getElementById('catatanCekout').value.trim().toUpperCase() || "-";
+            
+            if (!petugas) return Swal.fire('Error', 'Nama Security wajib diisi!', 'warning');
+            if (!signaturePadInst || signaturePadInst.isEmpty()) return Swal.fire('Error', 'Tanda tangan Security wajib diisi!', 'warning');
+            
+            const daftarBarang = Array.isArray(dataTerpilih.daftarBarang) ? dataTerpilih.daftarBarang : [];
+            let adaSisaGantung = false;
+
+            const updatedBarang = daftarBarang.map((brg, i) => {
+                const sisaKuantitas = parseInt(brg.jumlahAwal ?? brg.jumlah ?? 0) - parseInt(brg.jumlahDikembalikan ?? 0);
+                const inputVal = forceSelesai ? sisaKuantitas : parseInt(document.getElementById(`input-${i}`).value || 0);
+                
+                const totalBaruDikembalikan = parseInt(brg.jumlahDikembalikan ?? 0) + inputVal;
+                if (totalBaruDikembalikan < parseInt(brg.jumlahAwal ?? brg.jumlah ?? 0)) adaSisaGantung = true; 
+                
+                return { ...brg, jumlahDikembalikan: totalBaruDikembalikan };
+            });
+
+            let statusAkhir = (forceSelesai || !adaSisaGantung) ? 'SUDAH CEKOUT' : 'SEBAGIAN KEMBALI';
+            let fotoLamaDatabase = Array.isArray(dataTerpilih.fotoKeluar) ? dataTerpilih.fotoKeluar : [];
+            let totalFotoCekoutGabungan = [...fotoLamaDatabase, ...listFotoKeluarURL];
+
+            Swal.fire({
+                title: 'Menyimpan Data...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const targetRef = ref(db, `data_vendor/${dataTerpilih.id}`);
+                await update(targetRef, {
+                    daftarBarang: updatedBarang, 
+                    status: statusAkhir,
+                    catatanCekout: catatan,
+                    jamKeluar: new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' }).replace('.',':'), 
+                    namaPetugas: petugas.toUpperCase(),
+                    tandaTanganPetugas: signaturePadInst.toDataURL(), 
+                    fotoKeluar: totalFotoCekoutGabungan 
+                });
+
+                const modalBody = document.getElementById('modalCekoutScrollBody');
+                if (modalBody) {
+                    modalBody.scrollTo({ top: 0, behavior: 'instant' });
+                }
+
+                Swal.fire('Sukses', 'Proses Checkout Berhasil Disimpan!', 'success').then(() => {
+                    window.tutupModalCekout();
+                });
+            } catch (err) { Swal.fire('Gagal', err.message, 'error'); }
+        }
+
+        window.filterData = function() {
+            const keyword = document.getElementById('inputSearch').value.toUpperCase();
+            const filtered = dataSemua.filter(item => 
+                (item.namaVendor || '').toUpperCase().includes(keyword) ||
+                (item.namaPIC || '').toUpperCase().includes(keyword) ||
+                (item.pekerjaan || '').toUpperCase().includes(keyword)
+            );
+            renderTabel(filtered);
+        }
+        
+        window.pemicuKamera = function() { 
+            if (listFotoKeluarURL.length >= 5) return Swal.fire('Maksimal 5 foto keluar', '', 'warning'); 
+            document.getElementById('uploadFotoKeluar').click(); 
+        }
+        
+        document.getElementById('uploadFotoKeluar').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            Swal.fire({
+                title: 'Memproses Gambar...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            for(let file of files.slice(0, 5 - listFotoKeluarURL.length)) {
+                const compressedBase64 = await compressImage(file);
+                if (compressedBase64) listFotoKeluarURL.push(compressedBase64);
+            }
+            renderPreviewKeluar(); 
+            Swal.close();
+        });
+        
+        function renderPreviewKeluar() {
+            const container = document.getElementById('containerPreviewKeluar');
+            container.innerHTML = listFotoKeluarURL.map((src, i) => `
+                <div class="relative w-full h-20 animate-slide-in">
+                    <img src="${src}" class="w-full h-full object-cover rounded-xl border border-primary" onerror="this.src='https://via.placeholder.com/100x100?text=INVALID'">
+                    <button onclick="window.hapusFotoKeluar(${i})" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full">×</button>
+                </div>`).join('');
+        }
+
+        window.hapusFotoKeluar = function(i) {
+            listFotoKeluarURL.splice(i, 1);
+            renderPreviewKeluar();
+        }
+        
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader(); 
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image(); 
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas'); 
+                        let w = img.width, h = img.height;
+                        if (w > 600) { h *= 600/w; w = 600; }
+                        canvas.width = w; canvas.height = h; 
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.5));
+                    };
+                };
+            });
+        }
+        
+        window.bukaLightbox = function(images, index) {
+            const content = document.getElementById('lightbox-content');
+            content.innerHTML = images.map(src => `<div class="swiper-slide flex items-center justify-center p-4"><img src="${src}" class="max-h-full max-w-full object-contain rounded-2xl" onerror="this.src='https://via.placeholder.com/300x300?text=IMAGE+NOT+FOUND'"></div>`).join('');
+            document.getElementById('lightbox').classList.remove('hidden');
+            if (mySwiper) mySwiper.destroy();
+            mySwiper = new Swiper(".mySwiper", { 
+                navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" }, 
+                pagination: { el: ".swiper-pagination", clickable: true } 
+            });
+            mySwiper.slideTo(index, 0);
+        }
+        
+        window.tutupLightbox = function() { document.getElementById('lightbox').classList.add('hidden'); }
+        
+        window.tutupModalCekout = function() { 
+            document.getElementById('modalFormCekout').classList.add('hidden'); 
+            document.body.style.overflow = 'auto'; 
+            
+            const modalBody = document.getElementById('modalCekoutScrollBody');
+            if (modalBody) modalBody.scrollTop = 0;
+
+            document.getElementById('namaPetugas').value = '';
+            if (signaturePadInst) signaturePadInst.clear();
+        }
+        
+        // Mulai memuat data saat halaman siap
+        muatDataCekout();
+    </script>
+</body>
+</html>

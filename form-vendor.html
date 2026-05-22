@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Check In Vendor - PT UTPE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0F1115',
+                        darkCard: '#1C1F26',
+                        darkInput: '#262A33',
+                        utYellow: '#FFD700', 
+                        utBlack: '#1A1A1A'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            #notifBerhasil, #notifGagal {
+                display: none;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 9999;
+                min-width: 290px;
+            }
+            .foto-item {
+                position: relative;
+                width: 100%;
+                padding-top: 100%;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .foto-item img {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                object-fit: cover;
+            }
+            .hapus-foto-btn {
+                position: absolute;
+                top: 5px; right: 5px;
+                background: rgba(239, 68, 68, 0.9);
+                color: white;
+                width: 25px; height: 25px;
+                border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 12px;
+                z-index: 10;
+            }
+            .wajib { color: #ef4444; font-weight: bold; }
+            
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+
+            .fab-container {
+                position: fixed;
+                bottom: 25px;
+                right: 20px;
+                z-index: 50;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            .btn-fab {
+                background-color: #FFD700;
+                color: #1A1A1A;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 10px 15px -3px rgba(255, 215, 0, 0.4);
+                transition: transform 0.2s;
+                cursor: pointer;
+                border: none;
+            }
+            .btn-fab:active { transform: scale(0.9); }
+            .fab-label {
+                background: rgba(30, 41, 59, 0.9);
+                color: white;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 9px;
+                font-weight: 800;
+                text-transform: uppercase;
+                pointer-events: none;
+            }
+            canvas {
+                touch-action: none; 
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg font-sans text-gray-900 dark:text-gray-100 p-4 transition-colors duration-300">
+
+    <div class="fixed top-5 right-5 z-50">
+        <button onclick="toggleDarkMode()" class="bg-white dark:bg-darkCard p-3 rounded-full shadow-lg border border-yellow-100 dark:border-gray-700 text-yellow-600 dark:text-yellow-400 active:scale-90 transition-all">
+            <i id="darkIcon" class="fa-solid fa-moon text-xl"></i>
+        </button>
+    </div>
+
+    <div class="fab-container">
+        <span class="fab-label">Tambah Baris</span>
+        <button type="button" onclick="window.tambahBarisBarang()" class="btn-fab">
+            <i class="fa-solid fa-plus text-xl"></i>
+        </button>
+    </div>
+
+    <div id="notifBerhasil" class="bg-white dark:bg-darkCard rounded-2xl shadow-2xl p-8 text-center border-t-4 border-yellow-500 max-w-sm">
+        <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-check text-yellow-600 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-1 uppercase dark:text-white">Berhasil!</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm uppercase mb-6">Data telah tersimpan</p>
+        <button type="button" onclick="location.reload();" class="w-full bg-yellow-500 text-utBlack font-black py-3 rounded-xl text-xs hover:bg-yellow-400 uppercase tracking-widest transition-all shadow-md active:scale-95">
+            <i class="fa-solid fa-circle-check mr-1"></i> OK, Selesai
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white dark:bg-darkCard rounded-3xl shadow-xl overflow-hidden mb-24 transition-colors duration-300 border border-transparent dark:border-gray-800">
+        <div class="bg-white dark:bg-darkCard p-6 text-center border-b border-gray-100 dark:border-gray-800">
+            <div class="flex flex-col items-center justify-center">
+                <div class="flex items-center justify-center gap-3 mb-2">
+                    <img src="icon-proyek.png" alt="Logo" class="h-10 w-auto" onerror="this.src='https://via.placeholder.com/40x40?text=UT'">
+                    <h1 class="text-xl font-black text-yellow-600 dark:text-yellow-500 uppercase tracking-tight">Form Check Barang Bawaan Vendor</h1>
+                </div>
+                <p class="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-widest">PT. United Tractors Pandu Engineering</p>
+                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1 uppercase">Jl. Jababeka XI Blok 30 – 40 Kawasan Industri Jababeka, Cikarang 17530</p>
+            </div>
+        </div>
+
+        <form id="formCheckIn" class="p-6 sm:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                <div class="md:col-span-2">
+                    <h2 class="text-xs font-black text-yellow-600 dark:text-yellow-500 mb-4 tracking-widest uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-id-card"></i> Informasi Kedatangan
+                    </h2>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">Nama Vendor <span class="wajib">*</span></label>
+                    <input type="text" id="namaVendor" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none dark:text-white" placeholder="NAMA PERUSAHAAN VENDOR" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">Nama PIC Vendor <span class="wajib">*</span></label>
+                    <input type="text" id="namaPIC" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none dark:text-white" placeholder="NAMA PENANGGUNG JAWAB" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">No. Polisi (Opsional)</label>
+                    <input type="text" id="kendaraan" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none dark:text-white" placeholder="B 1234 ABC">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">Jenis Pekerjaan <span class="wajib">*</span></label>
+                    <input type="text" id="pekerjaan" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none dark:text-white" placeholder="MISAL: PEMASANGAN PANEL" required>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">Area Kerja <span class="wajib">*</span></label>
+                    <select id="areaKerjaSelect" onchange="window.cekAreaLainnya(this)" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none appearance-none dark:text-white" required>
+                        <option value="">-- PILIH AREA KERJA --</option>
+                        <option value="WORKSHOP PLANT A">WORKSHOP PLANT A</option>
+                        <option value="WORKSHOP PLANT B">WORKSHOP PLANT B</option>
+                        <option value="WORKSHOP PLANT C">WORKSHOP PLANT C</option>
+                        <option value="WORKSHOP RND">WORKSHOP RND</option>
+                        <option value="WORKSHOP PDC">WORKSHOP PDC</option>
+                        <option value="OFFICE HO">OFFICE HO</option>
+                        <option value="OFFICE ENGINEERING">OFFICE ENGINEERING</option>
+                        <option value="OFFICE MANUF">OFFICE MANUF</option>
+                        <option value="OFFICE DPP">OFFICE DPP</option>
+                        <option value="WAREHOUSE UCKR">WAREHOUSE UCKR</option>
+                        <option value="WAREHOUSE INCOMING">WAREHOUSE INCOMING</option>
+                        <option value="GD SERBAGUNA">GD SERBAGUNA</option>
+                        <option value="AREA MASJID">AREA MASJID</option>
+                        <option value="LAINNYA">LAINNYA...</option>
+                    </select>
+                    <input type="text" id="areaKerjaCustom" class="hidden mt-3 w-full bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none dark:text-white" placeholder="MASUKKAN AREA KERJA LAINNYA">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black mb-2 uppercase">Pos Masuk <span class="wajib">*</span></label>
+                    <select id="posMasuk" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold uppercase focus:ring-2 focus:ring-yellow-500 outline-none appearance-none dark:text-white" required>
+                        <option value="">-- PILIH POS --</option>
+                        <option value="POS 1">POS 1</option>
+                        <option value="POS 2">POS 2</option>
+                        <option value="POS 3">POS 3</option>
+                        <option value="POS 4">POS 4</option>
+                        <option value="POS 7">POS 7</option>
+                        <option value="POS 8">POS 8</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-black mb-2 uppercase">Tanggal</label>
+                        <input type="date" id="tanggal" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white" required>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black mb-2 uppercase">Jam Masuk</label>
+                        <input type="time" id="jamMasuk" class="w-full bg-gray-50 dark:bg-darkInput border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold dark:text-white" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-xs font-black text-yellow-600 dark:text-yellow-500 mb-4 tracking-widest uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked"></i> Daftar Barang Bawaan
+                </h2>
+                <div id="listBarang" class="space-y-4"></div>
+            </div>
+
+            <div class="mb-8 p-6 bg-yellow-50/30 dark:bg-yellow-900/10 rounded-3xl border border-yellow-100/50 dark:border-yellow-900/20">
+                <h2 class="text-xs font-black text-yellow-600 dark:text-yellow-500 mb-4 tracking-widest uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Foto Dokumentasi <span class="wajib">*</span>
+                </h2>
+                <div id="daftarFotoTerpilih" class="grid grid-cols-3 sm:grid-cols-5 gap-4 mb-5"></div>
+                
+                <input type="file" id="inputFoto" accept="image/*" multiple class="hidden">
+                <button type="button" id="tombolTambahFoto" class="w-full bg-white dark:bg-darkInput border-2 border-dashed border-yellow-400 dark:border-yellow-800 text-yellow-600 p-4 rounded-2xl font-black text-[11px] uppercase flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all">
+                    <i class="fa-solid fa-images text-xl"></i>
+                    <span>Klik Untuk Pilih/Ambil Foto (Maks 5)</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="md:col-span-2">
+                    <h2 class="text-xs font-black text-yellow-600 dark:text-yellow-500 mb-4 tracking-widest uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-signature"></i> Verifikasi & Tanda Tangan
+                    </h2>
+                </div>
+                <div class="bg-gray-50 dark:bg-darkInput p-5 rounded-3xl border border-gray-100 dark:border-gray-700 text-center">
+                    <p class="text-[10px] font-black mb-3 text-gray-500 uppercase tracking-widest">Tanda Tangan Vendor</p>
+                    <div class="bg-white border-2 border-gray-200 rounded-2xl mb-4 h-40 shadow-inner overflow-hidden">
+                        <canvas id="ttdVendor" class="w-full h-full bg-white cursor-crosshair"></canvas>
+                    </div>
+                    <button type="button" onclick="window.hapusTTD('vendor')" class="text-[10px] font-black text-red-500 uppercase flex items-center gap-2 mb-4 mx-auto">
+                        <i class="fa-solid fa-rotate-left"></i> Reset TTD
+                    </button>
+                    <input type="text" id="namaJelasVendor" class="w-full border-b-2 border-gray-200 dark:border-gray-600 bg-transparent p-2 text-center text-sm font-black uppercase outline-none focus:border-yellow-500 transition-all dark:text-white" placeholder="NAMA JELAS VENDOR" required>
+                    <input type="hidden" id="dataVendor">
+                </div>
+                <div class="bg-gray-50 dark:bg-darkInput p-5 rounded-3xl border border-gray-100 dark:border-gray-700 text-center">
+                    <p class="text-[10px] font-black mb-3 text-gray-500 uppercase tracking-widest">Tanda Tangan Security</p>
+                    <div class="bg-white border-2 border-gray-200 rounded-2xl mb-4 h-40 shadow-inner overflow-hidden">
+                        <canvas id="ttdSecurity" class="w-full h-full bg-white cursor-crosshair"></canvas>
+                    </div>
+                    <button type="button" onclick="window.hapusTTD('security')" class="text-[10px] font-black text-red-500 uppercase flex items-center gap-2 mb-4 mx-auto">
+                        <i class="fa-solid fa-rotate-left"></i> Reset TTD
+                    </button>
+                    <input type="text" id="namaJelasSecurity" class="w-full border-b-2 border-gray-200 dark:border-gray-600 bg-transparent p-2 text-center text-sm font-black uppercase outline-none focus:border-yellow-500 transition-all dark:text-white" placeholder="NAMA JELAS SECURITY" required>
+                    <input type="hidden" id="dataSecurity">
+                </div>
+            </div>
+
+            <button type="submit" id="btnSimpan" class="w-full bg-yellow-500 text-utBlack font-black py-5 rounded-2xl text-sm shadow-xl shadow-yellow-200 dark:shadow-none hover:bg-yellow-400 active:scale-[0.98] transition-all uppercase tracking-widest">
+                <i class="fa-solid fa-floppy-disk mr-2"></i> Simpan & Masuk Antrian
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script type="module">
+      // 1. Import library Firebase versi terbaru (Modular SDK v10)
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+      // 2. Dark Mode Global
+      window.toggleDarkMode = function() {
+          const html = document.documentElement;
+          const icon = document.getElementById('darkIcon');
+          if (html.classList.contains('dark')) {
+              html.classList.remove('dark');
+              icon.classList.replace('fa-sun', 'fa-moon');
+              localStorage.setItem('theme', 'light');
+          } else {
+              html.classList.add('dark');
+              icon.classList.replace('fa-moon', 'fa-sun');
+              localStorage.setItem('theme', 'dark');
+          }
+      }
+      if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+
+      // 3. Konfigurasi Firebase BARU milik Anda (sistemkeamanan-2e605)
+      const firebaseConfig = {
+        apiKey: "AIzaSyD2ATbpqBuid0zhC3eZgAvcgRs1IFhGXa4",
+        authDomain: "sistemkeamanan-2e605.firebaseapp.com",
+        databaseURL: "https://sistemkeamanan-2e605-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sistemkeamanan-2e605",
+        storageBucket: "sistemkeamanan-2e605.firebasestorage.app",
+        messagingSenderId: "1078653939267",
+        appId: "1:1078653939267:web:88a7044bfc625967d62ef6",
+        measurementId: "G-FXVEB02HQW"
+      };
+      
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Fitur Status Koneksi
+      const connectedRef = ref(db, ".info/connected");
+      onValue(connectedRef, (snap) => {
+          if (snap.val() === false) {
+              Swal.fire({
+                  icon: 'warning',
+                  title: 'Koneksi Tidak Stabil',
+                  html: '<span class="text-[10px] leading-tight block">Sinyal lemah atau offline. Data form aman, pastikan online kembali sebelum klik simpan.</span>',
+                  toast: true,
+                  position: 'top-end',
+                  width: '320px',
+                  showConfirmButton: false,
+                  timer: 5000,
+                  timerProgressBar: true,
+                  background: document.documentElement.classList.contains('dark') ? '#1C1F26' : '#FFFFFF',
+                  color: document.documentElement.classList.contains('dark') ? '#FFFFFF' : '#000000',
+                  customClass: {
+                      popup: 'shadow-xl border-l-4 border-yellow-500 rounded-xl p-2 items-center',
+                      title: 'text-xs font-bold text-left m-0 p-0',
+                      htmlContainer: 'text-left m-0 mt-1 p-0',
+                      icon: 'text-xs m-0 mr-2 p-0 scale-75'
+                  }
+              });
+          }
+      });
+
+      // 4. Setup Tanggal/Jam & Auto Caps
+      document.getElementById('tanggal').valueAsDate = new Date();
+      document.getElementById('jamMasuk').value = new Date().toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit' }).replace('.',':');
+
+      function applyUppercaseListener() {
+          document.querySelectorAll('input[type="text"]').forEach(input => {
+              if(!input.dataset.hasUppercaseListener) {
+                  input.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+                  input.dataset.hasUppercaseListener = "true";
+              }
+          });
+      }
+      applyUppercaseListener();
+
+      // 5. Area Kerja Logic
+      window.cekAreaLainnya = function(select) {
+          const inputCustom = document.getElementById('areaKerjaCustom');
+          if (select.value === 'LAINNYA') {
+              inputCustom.classList.remove('hidden');
+              inputCustom.setAttribute('required', 'true');
+              inputCustom.focus();
+          } else {
+              inputCustom.classList.add('hidden');
+              inputCustom.removeAttribute('required');
+              inputCustom.value = '';
+          }
+      }
+
+      // 6. Barang Bawaan Logic
+      let nomorCount = 0;
+      window.tambahBarisBarang = function() {
+          nomorCount++;
+          const idUnik = 'baris-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+          const html = `
+            <div id="${idUnik}" class="barisBarang bg-white dark:bg-darkInput border border-gray-100 dark:border-gray-700 rounded-3xl p-5 shadow-sm grid grid-cols-12 gap-3 items-start relative animate-slide-in">
+                <div class="col-span-1 text-center pt-2"><span class="no-urut font-black text-yellow-600 text-[10px]">${nomorCount}</span></div>
+                <div class="col-span-11 sm:col-span-5">
+                    <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase">Nama Barang</label>
+                    <input type="text" class="nama-brg w-full bg-gray-50 dark:bg-darkBg border border-transparent p-2 rounded-lg text-xs font-bold uppercase dark:text-white outline-none" required>
+                </div>
+                <div class="col-span-4 sm:col-span-2">
+                    <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase">Jml</label>
+                    <input type="number" min="1" class="qty-brg w-full bg-gray-50 dark:bg-darkBg border border-transparent p-2 rounded-lg text-xs font-bold text-center dark:text-white outline-none" required>
+                </div>
+                <div class="col-span-8 sm:col-span-4">
+                    <label class="block text-[9px] font-bold text-gray-400 mb-1 uppercase">Satuan</label>
+                    <select onchange="window.cekSatuanLainnya(this)" class="satuan-brg w-full bg-gray-50 dark:bg-darkBg border border-transparent p-2 rounded-lg text-[10px] font-black uppercase dark:text-white outline-none">
+                        <option value="PCS" selected>PCS</option>
+                        <option value="SET">SET</option>
+                        <option value="ROLL">ROLL</option>
+                        <option value="LAINNYA">LAINNYA...</option>
+                    </select>
+                    <input type="text" class="satuan-custom hidden mt-2 w-full bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-2 rounded-lg text-[10px] font-bold uppercase dark:text-white outline-none">
+                </div>
+                <div class="col-span-12">
+                    <input type="text" class="ket-brg w-full bg-gray-50 dark:bg-darkBg border border-transparent p-2 rounded-lg text-[10px] font-bold uppercase dark:text-white outline-none" value="ALAT KERJA">
+                </div>
+                <button type="button" onclick="window.hapusBaris(this)" class="absolute -right-2 -top-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center text-[10px] shadow-lg border-2 border-white dark:border-darkInput">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>`;
+          document.getElementById('listBarang').insertAdjacentHTML('beforeend', html);
+          applyUppercaseListener();
+          updateNomor();
+      }
+      
+      window.cekSatuanLainnya = function(select) {
+          const input = select.parentElement.querySelector('.satuan-custom');
+          if(select.value === 'LAINNYA') {
+              input.classList.remove('hidden');
+              input.setAttribute('required', 'true');
+          } else {
+              input.classList.add('hidden');
+              input.removeAttribute('required');
+          }
+      }
+      
+      window.hapusBaris = function(btn) { btn.parentElement.remove(); updateNomor(); }
+      
+      function updateNomor() {
+          document.querySelectorAll('.barisBarang').forEach((el, i) => el.querySelector('.no-urut').innerText = i + 1);
+          nomorCount = document.querySelectorAll('.barisBarang').length;
+      }
+
+      // 7. Foto Logic (Sekarang Murni Base64 Gambar Dikompresi)
+      let fotoList = [];
+      document.getElementById('tombolTambahFoto').addEventListener('click', () => {
+          if (fotoList.length >= 5) return Swal.fire('Peringatan', 'Maksimal 5 foto', 'warning');
+          document.getElementById('inputFoto').click();
+      });
+      document.getElementById('inputFoto').addEventListener('change', async function(e) {
+          const files = Array.from(e.target.files);
+          if(files.length === 0) return;
+          
+          Swal.showLoading();
+          for (let file of files.slice(0, 5 - fotoList.length)) {
+              if (!file.type.startsWith('image/')) {
+                  Swal.fire('Gagal', 'File yang dipilih harus berupa gambar!', 'error');
+                  continue;
+              }
+              const data = await compressImage(file);
+              fotoList.push(data);
+          }
+          renderFoto();
+          Swal.close();
+          this.value = '';
+      });
+      
+      function renderFoto() {
+          const container = document.getElementById('daftarFotoTerpilih');
+          container.innerHTML = fotoList.map((foto, i) => `
+            <div class="foto-item animate-slide-in">
+                <img src="${foto}">
+                <button type="button" class="hapus-foto-btn" onclick="window.hapusFoto(${i})"><i class="fa-solid fa-xmark"></i></button>
+            </div>`).join('');
+          document.getElementById('tombolTambahFoto').style.display = fotoList.length >= 5 ? 'none' : 'flex';
+      }
+      
+      window.hapusFoto = function(index) {
+          fotoList.splice(index, 1);
+          renderFoto();
+      }
+
+      // Kompresi ketat agar Base64 berukuran kecil dan ringan untuk Realtime Database
+      async function compressImage(file) {
+          return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = (e) => {
+                  const img = new Image();
+                  img.src = e.target.result;
+                  img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const max = 600; // Diturunkan ke 600px untuk menghemat penyimpanan data text Base64
+                      let w = img.width, h = img.height;
+                      if (w > h) { if (w > max) { h *= max/w; w = max; } }
+                      else { if (h > max) { w *= max/h; h = max; } }
+                      canvas.width = w; canvas.height = h;
+                      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                      resolve(canvas.toDataURL('image/jpeg', 0.5)); // Menggunakan kualitas 50% agar hemat ruang
+                  };
+              };
+          });
+      }
+
+      // 8. Struktur Tanda Tangan
+      function setupTTD(id, hiddenId) {
+          const canvas = document.getElementById(id);
+          const ctx = canvas.getContext('2d');
+          let drawing = false;
+          let hasDrawn = false; 
+
+          function initCanvas() {
+              const rect = canvas.parentElement.getBoundingClientRect();
+              let tempCanvasData = null;
+              if (hasDrawn) {
+                  tempCanvasData = canvas.toDataURL();
+              }
+
+              const ratio = Math.max(window.devicePixelRatio || 1, 1);
+              canvas.width = rect.width * ratio;
+              canvas.height = rect.height * ratio;
+              canvas.style.width = rect.width + "px";
+              canvas.style.height = rect.height + "px";
+              
+              ctx.scale(ratio, ratio);
+              ctx.lineWidth = 3; 
+              ctx.lineCap = 'round'; 
+              ctx.strokeStyle = '#000000';
+
+              if (tempCanvasData) {
+                  const img = new Image();
+                  img.src = tempCanvasData;
+                  img.onload = () => {
+                      ctx.drawImage(img, 0, 0, rect.width, rect.height);
+                  };
+              }
+          }
+
+          const getPos = (e) => {
+              const rect = canvas.getBoundingClientRect();
+              const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+              const clientY = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+              return { x: clientX - rect.left, y: clientY - rect.top };
+          };
+
+          const startDrawing = (e) => { 
+              drawing = true; 
+              ctx.beginPath(); 
+              const pos = getPos(e); 
+              ctx.moveTo(pos.x, pos.y); 
+          };
+          
+          const moveDrawing = (e) => { 
+              if(!drawing) return; 
+              if(e.cancelable) e.preventDefault(); 
+              const pos = getPos(e); 
+              ctx.lineTo(pos.x, pos.y); 
+              ctx.stroke(); 
+              hasDrawn = true; 
+          };
+          
+          const stopDrawing = () => { 
+              if(drawing) { 
+                  drawing = false; 
+                  if(hasDrawn) {
+                      document.getElementById(hiddenId).value = canvas.toDataURL(); 
+                  }
+              } 
+          };
+
+          canvas.addEventListener('mousedown', startDrawing);
+          canvas.addEventListener('mousemove', moveDrawing);
+          canvas.addEventListener('mouseup', stopDrawing);
+          
+          canvas.addEventListener('touchstart', startDrawing, {passive: false});
+          canvas.addEventListener('touchmove', moveDrawing, {passive: false});
+          canvas.addEventListener('touchend', stopDrawing);
+
+          window.addEventListener('load', initCanvas);
+          window.addEventListener('resize', initCanvas);
+          setTimeout(initCanvas, 500); 
+
+          canvas.clearSignature = function() {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              document.getElementById(hiddenId).value = '';
+              hasDrawn = false;
+          };
+      }
+
+      setupTTD('ttdVendor', 'dataVendor'); 
+      setupTTD('ttdSecurity', 'dataSecurity');
+
+      window.hapusTTD = function(j) {
+          const id = j === 'vendor' ? 'ttdVendor' : 'ttdSecurity';
+          document.getElementById(id).clearSignature();
+      }
+
+      // 9. Submit Form - Murni Mengirim Teks Base64 Langsung Ke Realtime Database
+      document.getElementById('formCheckIn').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const btn = document.getElementById('btnSimpan');
+          const areaSelect = document.getElementById('areaKerjaSelect').value;
+          const areaFinal = (areaSelect === 'LAINNYA') ? document.getElementById('areaKerjaCustom').value : areaSelect;
+          const tglMasukUtama = document.getElementById('tanggal').value;
+          const jamMasukUtama = document.getElementById('jamMasuk').value;
+
+          let barang = [];
+          document.querySelectorAll('.barisBarang').forEach(el => {
+              const n = el.querySelector('.nama-brg').value.trim();
+              const q = el.querySelector('.qty-brg').value;
+              const sSel = el.querySelector('.satuan-brg').value;
+              const sFinal = (sSel === 'LAINNYA') ? el.querySelector('.satuan-custom').value.trim() : sSel;
+              const isiKeterangan = el.querySelector('.ket-brg').value.trim().toUpperCase() || "-";
+              
+              if(n && q) {
+                  barang.push({ 
+                      nama: n.toUpperCase(), 
+                      jumlahAwal: parseInt(q), 
+                      jumlah: parseInt(q), 
+                      satuan: sFinal.toUpperCase(), 
+                      keterangan: isiKeterangan,
+                      tglMasukItem: tglMasukUtama,
+                      jamMasukItem: jamMasukUtama,
+                      jumlahDikembalikan: 0 
+                  });
+              }
+          });
+
+          if (barang.length === 0) return Swal.fire('Error', 'Minimal isi 1 daftar barang bawaan!', 'error');
+          if (fotoList.length === 0) return Swal.fire('Error', 'Foto dokumentasi wajib diambil!', 'error');
+          if (!document.getElementById('dataVendor').value) return Swal.fire('Error', 'Tanda tangan Vendor belum diisi!', 'error');
+          if (!document.getElementById('dataSecurity').value) return Swal.fire('Error', 'Tanda tangan Security belum diisi!', 'error');
+
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MENYIMPAN DATA KE DATABASE...';
+          
+          try {
+              const data = {
+                  namaVendor: document.getElementById('namaVendor').value.toUpperCase(),
+                  namaPIC: document.getElementById('namaPIC').value.toUpperCase(),
+                  tanggal: tglMasukUtama,
+                  pekerjaan: document.getElementById('pekerjaan').value.toUpperCase(),
+                  area: areaFinal.toUpperCase(),
+                  posMasuk: document.getElementById('posMasuk').value,
+                  kendaraan: document.getElementById('kendaraan').value.toUpperCase() || "-",
+                  jamMasuk: jamMasukUtama,
+                  namaJelasVendor: document.getElementById('namaJelasVendor').value.toUpperCase(),
+                  namaJelasSecurity: document.getElementById('namaJelasSecurity').value.toUpperCase(),
+                  daftarBarang: barang,
+                  
+                  // Foto langsung disimpan sebagai Array Teks Base64 tanpa melalui Firebase Storage
+                  fotoPeralatan: fotoList, 
+                  fotoCekin: fotoList[0],
+                  
+                  ttdVendor: document.getElementById('dataVendor').value,
+                  ttdSecurity: document.getElementById('dataSecurity').value,
+                  status: 'BELUM CEKOUT',
+                  waktuInput: new Date().toISOString()
+              };
+              
+              // Menyimpan data final ke Firebase Realtime Database proyek baru Anda
+              const dataVendorRef = ref(db, 'data_vendor');
+              const newPostRef = push(dataVendorRef);
+              await set(newPostRef, data);
+              
+              document.getElementById('namaVendor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+              document.getElementById('notifBerhasil').style.display = 'block';
+              
+          } catch (err) {
+              btn.disabled = false; 
+              btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Simpan & Masuk Antrian';
+              Swal.fire('Gagal Menyimpan', 'Terjadi kesalahan sistem: ' + err.message, 'error');
+          }
+      });
+
+      window.onload = () => { if(nomorCount === 0) window.tambahBarisBarang(); };
+    </script>
+</body>
+</html>
